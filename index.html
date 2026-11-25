@@ -638,8 +638,8 @@ el.reset.addEventListener("click", ()=>{
 /* ---------- Leaderboard (Supabase) ----------
    Reads public rows from the `scores` table and posts this browser's score through the
    `submit_score` database function, which only lets a player overwrite their own row. */
-const SUPABASE_URL = "";      // e.g. "https://abcd1234.supabase.co"
-const SUPABASE_ANON_KEY = ""; // the project's public anon key: safe to publish, the database rules do the protecting
+const SUPABASE_URL = "https://yumtxvqpliuoixrowfod.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_u_x8wqnZv04w8xr8C90itw_vSEnb3Ms"; // public key: safe to publish, the database rules do the protecting
 function rankOf(total){ let r=RANKS[0][1]; for(const [v,n] of RANKS) if(total>=v) r=n; return r; }
 const B = {on:false,me:null,docs:[],loaded:false,nick:"",lastPostTotal:-1,lastPostNick:null,lastPost:0,posting:false,blocked:false};
 const bel = {rows:$("board-rows"), msg:$("board-msg"), note:$("board-note"), form:$("nick-form"), nick:$("nick")};

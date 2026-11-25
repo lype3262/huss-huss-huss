@@ -22,6 +22,9 @@ create table if not exists public.score_secrets (
   secret_hash bytea not null
 );
 
+-- Newer Supabase projects don't expose new tables automatically: let visitors read scores (only).
+grant select on public.scores to anon, authenticated;
+
 alter table public.scores        enable row level security;
 alter table public.score_secrets enable row level security;
 
