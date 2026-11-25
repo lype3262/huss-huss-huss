@@ -200,8 +200,11 @@ p.boardnote{margin:8px 0 0}
 .probtn.armed{background:var(--rope);color:var(--fg)}
 .probtn:disabled{background:var(--panel-2);color:var(--muted);box-shadow:none;border-color:var(--line);cursor:not-allowed}
 .perkh{font-family:var(--display);font-weight:400;font-size:16px;letter-spacing:.03em;margin:18px 0 0}
-.up.owned{border-color:var(--good);cursor:default}
+.up.owned{border-color:var(--good)}
 .up.owned .c{color:var(--good)}
+.up.selling{border-color:var(--rope);background:var(--rope)}
+.up.selling .c,.up.selling .d{color:var(--fg)}
+.stagepill{background:var(--rope);color:var(--fg)}
 
 /* Login screen */
 .gate{position:fixed;inset:0;z-index:30;display:grid;place-items:center;overflow-y:auto;background:rgba(5,10,35,.88);
@@ -255,7 +258,8 @@ p.boardnote{margin:8px 0 0}
           <span>per second <b id="rate">0</b></span>
           <span>per jab <b id="perjab">1</b></span>
           <span class="rank" id="rank">Couch Potato</span>
-          <span class="pill" id="gains" hidden>Gains ×7</span>
+          <span class="pill stagepill" id="stage-pill">Amateur</span>
+          <span class="pill" id="gains" hidden>Gains ×5</span>
         </div>
       </div>
 
@@ -421,12 +425,12 @@ const UPGRADES = [
   {id:"wraps", name:"Hand Wraps",       desc:"Jabs earn twice as much.",                         cost:100,   click:2,   unlock:()=>S.jabs>=15},
   {id:"band",  name:"Sweatband",        desc:"Keeps sweat out of your eyes. Jabs ×2.",           cost:500,   click:2,   unlock:()=>S.jabs>=60},
   {id:"fury",  name:"Fury Training",    desc:"The fury meter fills twice as fast.",              cost:5000,  furyx:2,   unlock:()=>S.jabs>=150},
-  {id:"pre",   name:"Pre-Workout Scoop",desc:"Each jab also earns 2% of your huss per second.",  cost:20000, pct:0.02,  unlock:()=>S.total>=8000},
+  {id:"pre",   name:"Pre-Workout Scoop",desc:"Each jab also earns 1% of your huss per second.",  cost:20000, pct:0.01,  unlock:()=>S.total>=8000},
   {id:"guard", name:"Mouthguard",       desc:"Somehow makes the HUSS louder. Jabs ×2.",          cost:150000,click:2,   unlock:()=>S.total>=60000},
-  {id:"tiger", name:"Eye of the Tiger", desc:"Each jab earns another 4% of your huss per second.",cost:3e6,  pct:0.04,  unlock:()=>S.total>=1e6},
-  {id:"lungs", name:"Iron Lungs",       desc:"Each jab earns another 6% of your huss per second.",cost:2e8,  pct:0.06,  unlock:()=>S.total>=8e7},
+  {id:"tiger", name:"Eye of the Tiger", desc:"Each jab earns another 2% of your huss per second.",cost:3e6,  pct:0.02,  unlock:()=>S.total>=1e6},
+  {id:"lungs", name:"Iron Lungs",       desc:"Each jab earns another 3% of your huss per second.",cost:2e8,  pct:0.03,  unlock:()=>S.total>=8e7},
   {id:"montage",  name:"Training Montage",       desc:"All crew produce 50% more.",                         cost:5e7,  prod:1.5, unlock:()=>S.total>=1e7},
-  {id:"thousand", name:"Thousand-Fist Technique",desc:"Each jab earns another 8% of your huss per second.", cost:1e11, pct:0.08,  unlock:()=>S.total>=3e10},
+  {id:"thousand", name:"Thousand-Fist Technique",desc:"Each jab earns another 4% of your huss per second.", cost:1e11, pct:0.04,  unlock:()=>S.total>=3e10},
   {id:"anthem",   name:"Walkout Anthem",         desc:"All crew produce 50% more.",                         cost:5e11, prod:1.5, unlock:()=>S.total>=1e11},
   {id:"spot",     name:"Main Event Spotlight",   desc:"All crew produce twice as much.",                    cost:1e14, prod:2,   unlock:()=>S.total>=3e13}
 ];
@@ -441,18 +445,37 @@ GENS.forEach((g,i)=>{
 });
 /* Belt perks: bought once with championship belts, kept forever. */
 const PERKS = [
-  {id:"memory",   name:"Muscle Memory",   desc:"Start every run with 10 Gym Bros.",                         cost:1},
-  {id:"cardio",   name:"Cardio Base",     desc:"Fury drains half as fast.",                                 cost:2},
-  {id:"wind",     name:"Second Wind",     desc:"Protein shakes show up twice as often.",                    cost:4},
-  {id:"sparring", name:"Sparring Partner",desc:"Each jab also earns 5% of your huss per second.",           cost:8},
-  {id:"discount", name:"Gym Membership",  desc:"Crew costs 10% less.",                                      cost:15},
-  {id:"legacy",   name:"Legacy Gear",     desc:"Start every run with Hand Wraps, Sweatband and Mouthguard.",cost:30},
-  {id:"fame",     name:"Hall of Fame",    desc:"All production +50%.",                                      cost:60},
-  {id:"goat",     name:"G.O.A.T.",        desc:"Each belt gives +7% instead of +5%.",                       cost:150}
+  {id:"memory",   name:"Muscle Memory",   desc:"Start every run with 10 Gym Bros.",                          cost:1},
+  {id:"cardio",   name:"Cardio Base",     desc:"Fury drains half as fast.",                                  cost:2},
+  {id:"quick",    name:"Quick Hands",     desc:"Jabs earn twice as much.",                                   cost:3},
+  {id:"wind",     name:"Second Wind",     desc:"Protein shakes show up twice as often.",                     cost:4},
+  {id:"protein",  name:"Protein Pro",     desc:"Shake Gains last twice as long.",                            cost:6},
+  {id:"sparring", name:"Sparring Partner",desc:"Each jab also earns 2% of your huss per second.",            cost:8},
+  {id:"headstart",name:"Head Start",      desc:"Start every run with 5 Shadowboxers.",                       cost:10},
+  {id:"discount", name:"Gym Membership",  desc:"Crew costs 10% less.",                                       cost:15},
+  {id:"iron",     name:"Iron Will",       desc:"Fury never drops below 25%.",                                cost:20},
+  {id:"night",    name:"Night Shift",     desc:"Earn full speed while away, for up to 8 hours (normally half, up to 4).", cost:25},
+  {id:"legacy",   name:"Legacy Gear",     desc:"Start every run with Hand Wraps, Sweatband and Mouthguard.", cost:30},
+  {id:"wholesale",name:"Wholesale Deal",  desc:"Crew costs another 10% less.",                               cost:40},
+  {id:"fame",     name:"Hall of Fame",    desc:"All production +50%.",                                       cost:60},
+  {id:"collector",name:"Belt Collector",  desc:"Turning pro gives 25% more belts.",                          cost:100},
+  {id:"goat",     name:"G.O.A.T.",        desc:"Each belt gives +7% instead of +5%.",                        cost:150},
+  {id:"legend",   name:"Living Legend",   desc:"All production doubles.",                                    cost:250}
 ];
+const PERK_REFUND = 0.75; // selling a perk returns 75% of its belts (rounded down)
+/* Fighter looks, unlocked by total belts. Colours feed fighter(); see drawFighterLook. */
+const STAGES = [
+  {at:0,   name:"Amateur",   tank:"#f2f3f8", shorts:"#e0352b", trim:"#f2f3f8", band:"#e0352b", gloves:null,      belt:false, aura:null},
+  {at:1,   name:"Pro",       tank:null,      shorts:"#1d2a6b", trim:"#f6c445", band:"#e0352b", gloves:"#e0352b", belt:false, aura:null},
+  {at:5,   name:"Contender", tank:null,      shorts:"#f6c445", trim:"#08102b", band:"#08102b", gloves:"#f6c445", belt:false, aura:"rgba(246,196,69,0.20)"},
+  {at:20,  name:"Champion",  tank:null,      shorts:"#e0352b", trim:"#f6c445", band:"#f6c445", gloves:"#e0352b", belt:true,  aura:"rgba(246,196,69,0.30)"},
+  {at:60,  name:"Legend",    tank:null,      shorts:"#f2f3f8", trim:"#f6c445", band:"#ff8a1f", gloves:"#f6c445", belt:true,  aura:"rgba(255,160,50,0.40)", flame:true},
+  {at:150, name:"Cosmic",    tank:null,      shorts:"#160c38", trim:"#8be9ff", band:"#8be9ff", gloves:"#8be9ff", belt:true,  aura:"rgba(150,110,255,0.50)", flame:true, stars:true}
+];
+function stageIdx(b){ let k = 0; STAGES.forEach((st,i)=>{ if(b >= st.at) k = i; }); return k; }
 const RANKS = [
   [0,"Couch Potato"],[100,"Air Puncher"],[1e3,"Shadow Novice"],[1e4,"Huss Apprentice"],[1e5,"Jab Enthusiast"],
-  [1e6,"Huss Journeyman"],[1e7,"Air Assassin"],[1e8,"Huss Master"],[1e9,"Grand Hussmaster"],[1e11,"Huss Incarnate"],
+  [1e6,"Hussalinaire"],[1e7,"Air Assassin"],[1e8,"Huss Master"],[1e9,"Grand Hussmaster"],[1e11,"Huss Incarnate"],
   [1e13,"The Air Fears You"],[1e15,"Hussiah"],[1e18,"Big Bang Boxer"]
 ];
 const LITRES_PER_JAB = 2.8; // forearm sweep: ~80 cm² cross-section × 35 cm reach
@@ -463,7 +486,9 @@ function fresh(){
   // huss = bank, total = earned this run, lifetime = earned across every run (ranks, belts, leaderboard)
   return {huss:0,total:0,lifetime:0,jabs:0,bestStreak:0,owned:GENS.map(()=>0),up:{},perks:{},belts:0,prestiges:0,
           muted:false,volume:0.8,last:Date.now(),qty:1,gainsUntil:0,nextShake:Date.now()+40000,
-          wipe:0}; // which owner reset this save belongs to (see huss_admin_reset)
+          wipe:0, beltsEarned:0, beltsBurned:0};
+  // wipe: which owner reset this save belongs to (see huss_admin_reset)
+  // beltsEarned: belts from the formula (Belt Collector bonus belts aren't counted); beltsBurned: lost to perk-selling fees
 }
 let S = fresh();
 function normalize(s){
@@ -475,6 +500,8 @@ function normalize(s){
   out.lifetime = (s && s.lifetime!=null) ? (+s.lifetime||0) : out.total; // older saves had no lifetime
   out.belts = Math.max(0, Math.floor(+out.belts||0));
   out.wipe = Math.max(0, Math.floor(+out.wipe||0));
+  out.beltsEarned = (s && s.beltsEarned!=null) ? Math.max(0, Math.floor(+s.beltsEarned||0)) : out.belts;
+  out.beltsBurned = Math.max(0, Math.floor(+out.beltsBurned||0));
   out.volume = (typeof out.volume==="number" && out.volume>=0 && out.volume<=1) ? out.volume : 0.8;
   if([1,10,100,-1].indexOf(out.qty)<0) out.qty = 1;
   return out;
@@ -494,22 +521,24 @@ function beltBonus(){ return 1 + S.belts*(S.perks.goat ? 0.07 : 0.05); }
 function prodMult(){
   let m = beltBonus();
   if(S.perks.fame) m *= 1.5;
+  if(S.perks.legend) m *= 2;
   for(const u of UPGRADES) if(u.prod && S.up[u.id]) m *= u.prod;
   return m;
 }
 function baseHps(){ let t=0; GENS.forEach((g,i)=>{ t += S.owned[i]*g.hps*genMult(i); }); return t*prodMult(); }
 function gainsOn(){ return Date.now() < S.gainsUntil; }
-function hps(){ return baseHps() * (gainsOn()?7:1); }
+const GAINS = 5; // protein shake "Gains" multiplier
+function hps(){ return baseHps() * (gainsOn()?GAINS:1); }
 function clickBase(){
-  let c=1, pct = S.perks.sparring ? 0.05 : 0;
+  let c = S.perks.quick ? 2 : 1, pct = S.perks.sparring ? 0.02 : 0;
   for(const u of UPGRADES){ if(!S.up[u.id]) continue; if(u.click) c*=u.click; if(u.pct) pct+=u.pct; }
   return c*beltBonus() + hps()*pct;
 }
 let fury = 0;
-function furyMult(){ return 1 + fury/50; }
+function furyMult(){ return 1 + fury/100; } // full fury = ×2
 function earn(n){ S.huss += n; S.total += n; S.lifetime += n; }
-const GROWTH = 1.15;
-function priceMult(){ return S.perks.discount ? 0.9 : 1; }
+const GROWTH = 1.18; // each crew member costs 18% more than the last
+function priceMult(){ return (S.perks.discount ? 0.9 : 1) * (S.perks.wholesale ? 0.9 : 1); }
 function costOf(i,n){
   const g=GENS[i];
   return Math.ceil(g.base*priceMult()*Math.pow(GROWTH,S.owned[i])*(Math.pow(GROWTH,n)-1)/(GROWTH-1));
@@ -709,7 +738,7 @@ function updateShop(force){
     }
     r.b.hidden=false; r.b.classList.remove("locked");
     const n = S.qty>0 ? S.qty : Math.max(1, maxAffordable(i));
-    const cost = costOf(i,n), each = g.hps*genMult(i)*prodMult()*(gainsOn()?7:1);
+    const cost = costOf(i,n), each = g.hps*genMult(i)*prodMult()*(gainsOn()?GAINS:1);
     r.k.textContent = S.owned[i];
     r.n.textContent = g.name;
     r.d.textContent = g.desc;
@@ -736,7 +765,7 @@ function jab(px,py){
 
   const gain = clickBase()*furyMult();
   earn(gain); S.jabs++;
-  fury = Math.min(100, fury + 5*(S.up.fury?2:1));
+  fury = Math.min(100, fury + 4*(S.up.fury?2:1));
   jabTimes.push(now);
 
   // pick an arm: alternate, but don't interrupt a punch that's still going out
@@ -785,10 +814,11 @@ el.shake.addEventListener("click", ()=>{
   el.shake.hidden = true; S.nextShake = Date.now() + shakeGap();
   playBlip(true);
   if(baseHps()>0 && Math.random()<0.55){
-    S.gainsUntil = Date.now()+30000;
-    toast("GAINS! Your crew hisses ×7 harder for 30 seconds.");
+    const secs = S.perks.protein ? 40 : 20;
+    S.gainsUntil = Date.now()+secs*1000;
+    toast("GAINS! Your crew hisses ×"+GAINS+" harder for "+secs+" seconds.");
   } else {
-    const amt = Math.max(13, Math.min(S.huss*0.15, Math.max(hps(),clickBase())*900)) + 13;
+    const amt = Math.max(13, Math.min(S.huss*0.1, Math.max(hps(),clickBase())*600)) + 13;
     earn(amt); toast("Protein boost! +"+fmt(amt)+" huss");
   }
   updateShop(true);
@@ -836,17 +866,19 @@ el.reset.addEventListener("click", ()=>{
 
 /* ---------- Turn Pro (prestige) ----------
    Belts are earned from LIFETIME huss: total belts = floor(cbrt(lifetime / 1,000,000)).
-   1M → 1 belt, 8M → 2, 1B → 10, 1T → 100. Turning pro banks the belts you've earned
+   10M → 1 belt, 80M → 2, 10B → 10, 10T → 100. Turning pro banks the belts you've earned
    since last time and starts a fresh run. Spending belts on perks never lowers the bonus. */
-const BELT_UNIT = 1e6;
+const BELT_UNIT = 1e7;
 function beltsFor(life){ return Math.floor(Math.cbrt(Math.max(0,life)/BELT_UNIT)); }
-function pendingBelts(){ return Math.max(0, beltsFor(S.lifetime) - S.belts); }
+function pendingBelts(){ return Math.max(0, beltsFor(S.lifetime) - S.beltsEarned); }
+function beltGainNow(){ const p = pendingBelts(); return p + (S.perks.collector ? Math.floor(p*0.25) : 0); }
 function nextBeltAt(){ return Math.pow(beltsFor(S.lifetime)+1,3)*BELT_UNIT; }
 function beltsSpent(){ return PERKS.reduce((a,p)=>a+(S.perks[p.id]?p.cost:0),0); }
-function beltsFree(){ return Math.max(0, S.belts - beltsSpent()); }
+function beltsFree(){ return Math.max(0, S.belts - beltsSpent() - (S.beltsBurned||0)); }
 function shakeGap(){ return (60000 + Math.random()*100000) * (S.perks.wind ? 0.5 : 1); }
 function applyRunPerks(){
   if(S.perks.memory) S.owned[0] = Math.max(S.owned[0], 10);
+  if(S.perks.headstart) S.owned[1] = Math.max(S.owned[1], 5);
   if(S.perks.legacy){ S.up.wraps = true; S.up.band = true; S.up.guard = true; }
 }
 const pel = {box:$("pro"), each:$("belt-each"), belts:$("belts"), bonus:$("belt-bonus"), free:$("belts-free"),
@@ -854,20 +886,22 @@ const pel = {box:$("pro"), each:$("belt-each"), belts:$("belts"), bonus:$("belt-
 let proArmed = false, proTimer = 0, perksBuilt = false;
 
 function updatePro(){
-  const show = S.lifetime >= 1e5 || S.belts > 0;
+  const show = S.lifetime >= 1e6 || S.belts > 0;
   pel.box.hidden = !show;
   if(!show) return;
   pel.each.textContent = (S.perks.goat ? 7 : 5)+"%";
   pel.belts.textContent = fmt(S.belts);
   pel.bonus.textContent = "+"+fmt(Math.round((beltBonus()-1)*100))+"%";
   pel.free.textContent = fmt(beltsFree());
-  const gain = pendingBelts();
+  const gain = beltGainNow();
   pel.btn.disabled = gain < 1;
   pel.btn.classList.toggle("armed", proArmed && gain>=1);
   pel.btn.textContent = gain < 1 ? "Turn pro"
     : proArmed ? "Click again: crew and upgrades reset"
     : "Turn pro: +"+fmt(gain)+" belt"+(gain>1?"s":"");
-  pel.next.textContent = "Next belt at "+fmt(nextBeltAt(),{short:true})+" all-time huss. You're at "+fmt(S.lifetime,{short:true})+".";
+  const st = stageIdx(S.belts), nx = STAGES[st+1];
+  pel.next.textContent = "Next belt at "+fmt(nextBeltAt(),{short:true})+" all-time huss. You're at "+fmt(S.lifetime,{short:true})+"."
+    + (nx ? " Your fighter becomes a "+nx.name+" at "+nx.at+" belt"+(nx.at>1?"s":"")+"." : " Your fighter is fully evolved.");
   renderPerks();
 }
 function renderPerks(){
@@ -886,32 +920,56 @@ function renderPerks(){
   const free = beltsFree();
   pel.perks.querySelectorAll(".up").forEach(b=>{
     const p = PERKS.find(x=>x.id===b.dataset.id), own = !!S.perks[p.id];
+    const refund = Math.floor(p.cost*PERK_REFUND);
     b.classList.toggle("owned", own);
+    b.classList.toggle("selling", own && sellArmed===p.id);
     b.classList.toggle("no", !own && free < p.cost);
-    b.setAttribute("aria-disabled", (own || free < p.cost) ? "true" : "false");
-    b.querySelector(".c").textContent = own ? "Owned" : p.cost+" belt"+(p.cost>1?"s":"");
+    b.setAttribute("aria-disabled", (!own && free < p.cost) ? "true" : "false");
+    b.querySelector(".c").textContent = !own ? p.cost+" belt"+(p.cost>1?"s":"")
+      : sellArmed===p.id ? "Click again to sell for "+refund
+      : "Owned · sell for "+refund;
   });
 }
+let sellArmed = null, sellTimer = 0;
 function buyPerk(id){
   const p = PERKS.find(x=>x.id===id);
-  if(!p || S.perks[id] || beltsFree() < p.cost) return;
+  if(!p) return;
+  if(S.perks[id]){ sellPerk(p); return; }
+  if(beltsFree() < p.cost) return;
   S.perks[id] = true;
-  if(id==="memory" || id==="legacy") applyRunPerks();
+  if(id==="memory" || id==="legacy" || id==="headstart") applyRunPerks();
   playBlip(true); syncMinis(); updateShop(true); save(); sync(true);
   toast(p.name+" unlocked. "+p.desc);
 }
+/* Selling takes two clicks; it returns 75% of the belts and the rest is lost for good. */
+function sellPerk(p){
+  if(sellArmed !== p.id){
+    sellArmed = p.id; clearTimeout(sellTimer);
+    sellTimer = setTimeout(()=>{ sellArmed = null; renderPerks(); }, 3500);
+    renderPerks(); return;
+  }
+  sellArmed = null; clearTimeout(sellTimer);
+  const refund = Math.floor(p.cost*PERK_REFUND);
+  delete S.perks[p.id];
+  S.beltsBurned = (S.beltsBurned||0) + (p.cost - refund);
+  playBlip(false); updateShop(true); save(); sync(true);
+  toast("Sold "+p.name+" for "+refund+" belt"+(refund===1?"":"s")+".");
+}
 function turnPro(){
-  const gain = pendingBelts();
+  const base = pendingBelts(), gain = beltGainNow();
   if(gain < 1) return;
-  S.belts += gain; S.prestiges = (S.prestiges||0) + 1;
+  const before = stageIdx(S.belts);
+  S.beltsEarned += base; S.belts += gain; S.prestiges = (S.prestiges||0) + 1;
   S.huss = 0; S.total = 0; S.owned = GENS.map(()=>0); S.up = {}; S.gainsUntil = 0;
   applyRunPerks();
   fury = 0; syncMinis(); updateShop(true); save(); sync(true);
   playBlip(true);
-  toast("You turned pro! +"+fmt(gain)+" belt"+(gain>1?"s":"")+". Everything you earn is now ×"+beltBonus().toFixed(2)+".");
+  const after = stageIdx(S.belts);
+  if(after > before){ evolveT = 1; toast("Your fighter evolved into a "+STAGES[after].name+"! +"+fmt(gain)+" belt"+(gain>1?"s":"")+", everything you earn is now ×"+beltBonus().toFixed(2)+"."); }
+  else toast("You turned pro! +"+fmt(gain)+" belt"+(gain>1?"s":"")+". Everything you earn is now ×"+beltBonus().toFixed(2)+".");
 }
 pel.btn.addEventListener("click", ()=>{
-  if(pendingBelts() < 1) return;
+  if(beltGainNow() < 1) return;
   if(!proArmed){
     proArmed = true; clearTimeout(proTimer);
     proTimer = setTimeout(()=>{ proArmed = false; updatePro(); }, 4000);
@@ -1361,19 +1419,40 @@ function fighter(x,y,s,L,R,o){
   const elL=U(mix([42,-162],[80,-195],L)), fiL=U(mix([56,-208],[128,-204],L));
   const elR=U(mix([26,-156],[62,-188],R)), fiR=U(mix([42,-218],[122,-198],R));
 
+  const look = o.look || STAGES[0];
+  const fist = (pt, near)=>{
+    if(look.gloves && !sil){
+      dot(pt, near?15:14, look.gloves, null);
+      ctx.strokeStyle="rgba(255,255,255,.55)"; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(pt[0]+2,pt[1]-3,7,Math.PI*1.1,Math.PI*1.7); ctx.stroke();
+    } else dot(pt, near?11:10, near?C.skin:C.skin2, sil);
+  };
   // rear arm (far side, behind torso)
-  limb([shR,elR,fiR],13,C.skin2,sil); dot(fiR,10,C.skin2,sil);
+  limb([shR,elR,fiR],13,C.skin2,sil); fist(fiR,false);
   // legs
   limb([[-4,-100],[-26,-50],[-48,-4]],15,C.skin2,sil);
   limb([[4,-100],[30,-54],[50,-4]],15,C.skin,sil);
   limb([[-56,-3],[-38,-3]],10,C.shoe,sil);
   limb([[44,-3],[64,-3]],10,C.shoe,sil);
   // shorts
-  poly([U([-24,-124]),U([26,-124]),[32,-76],[10,-70],[3,-90],[-6,-70],[-30,-76]],C.shorts,sil);
-  if(!sil){ ctx.strokeStyle=C.tank; ctx.lineWidth=4; path([[18,-118],[26,-80]]); ctx.stroke(); }
-  // neck + torso (tank top)
+  poly([U([-24,-124]),U([26,-124]),[32,-76],[10,-70],[3,-90],[-6,-70],[-30,-76]],look.shorts,sil);
+  if(!sil){ ctx.strokeStyle=look.trim; ctx.lineWidth=4; path([[18,-118],[26,-80]]); ctx.stroke(); }
+  // neck + torso
   limb([U([16,-196]),head],14,C.skin,sil);
-  poly([U([-6,-202]),U([30,-200]),U([28,-122]),U([-22,-122])],C.tank,sil);
+  if(look.tank || sil){
+    poly([U([-6,-202]),U([30,-200]),U([28,-122]),U([-22,-122])],look.tank||C.tank,sil);
+  } else {
+    poly([U([-8,-202]),U([32,-200]),U([28,-122]),U([-22,-122])],C.skin,null);
+    ctx.strokeStyle=C.skin2; ctx.lineWidth=3;
+    path([U([4,-176]),U([16,-170]),U([28,-176])]); ctx.stroke();      // chest
+    path([U([8,-152]),U([24,-152])]); ctx.stroke();                     // abs
+    path([U([6,-138]),U([22,-138])]); ctx.stroke();
+    path([U([15,-162]),U([14,-130])]); ctx.stroke();
+  }
+  if(look.belt && !sil){
+    limb([U([-24,-125]),U([28,-125])],10,"#f6c445",null);
+    dot(U([4,-125]),10,"#f6c445",null);
+    ctx.fillStyle="#e0352b"; ctx.beginPath(); ctx.arc(U([4,-125])[0],U([4,-125])[1],4.5,0,Math.PI*2); ctx.fill();
+  }
   // head
   dot(head,26,C.skin,sil);
   if(!sil){
@@ -1385,9 +1464,17 @@ function fighter(x,y,s,L,R,o){
     dot([hx-5,hy+3],6,C.skin,null);
     // headband + flapping tails
     ctx.strokeStyle=C.ink; ctx.lineWidth=12; path([[hx-26,hy-8],[hx+25,hy-13]]); ctx.stroke();
-    ctx.strokeStyle=C.band; ctx.lineWidth=7; path([[hx-26,hy-8],[hx+25,hy-13]]); ctx.stroke();
+    ctx.strokeStyle=look.band; ctx.lineWidth=7; path([[hx-26,hy-8],[hx+25,hy-13]]); ctx.stroke();
     const w1=Math.sin(t*9)*7, w2=Math.sin(t*9+1.3)*7;
-    ctx.lineWidth=6; ctx.strokeStyle=C.band;
+    if(look.flame){
+      for(let k=0;k<3;k++){
+        const f = Math.sin(t*14+k*2)*5;
+        ctx.strokeStyle = k===0 ? "#ff5a1f" : k===1 ? "#ffb21f" : "#fff1a8";
+        ctx.lineWidth = 9-k*3;
+        ctx.beginPath(); ctx.moveTo(hx-24,hy-8); ctx.quadraticCurveTo(hx-46,hy-22+f,hx-70-k*4,hy-14+w2); ctx.stroke();
+      }
+    }
+    ctx.lineWidth=6; ctx.strokeStyle=look.band;
     ctx.beginPath(); ctx.moveTo(hx-24,hy-8); ctx.quadraticCurveTo(hx-42,hy-14+w1,hx-60,hy-4+w2); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(hx-24,hy-6); ctx.quadraticCurveTo(hx-40,hy+2+w2,hx-55,hy+10+w1); ctx.stroke();
     // brow, eye, mouth
@@ -1397,7 +1484,7 @@ function fighter(x,y,s,L,R,o){
     else { ctx.lineWidth=3; path([[hx+14,hy+15],[hx+22,hy+14]]); ctx.stroke(); }
   }
   // lead arm (near side)
-  limb([shL,elL,fiL],14,C.skin,sil); dot(fiL,11,C.skin,sil);
+  limb([shL,elL,fiL],14,C.skin,sil); fist(fiL,true);
   // speed lines
   if(!sil){
     [[L,fiL],[R,fiR]].forEach(([e,f])=>{
@@ -1457,7 +1544,7 @@ function drawBackground(time){
   ctx.fillText("HUSS",0,0); ctx.restore();
 }
 
-let lastFrame = performance.now(), firstPaint = true;
+let lastFrame = performance.now(), firstPaint = true, evolveT = 0;
 function frame(now){
   const dt = Math.min(0.05,(now-lastFrame)/1000); lastFrame = now;
   const time = now/1000;
@@ -1485,11 +1572,30 @@ function frame(now){
   // main fighter
   const s = Math.min(H/330, W/300)*1.0;
   const fx = W*0.4, fy = H*0.93;
+  const look = STAGES[stageIdx(S.belts)];
+  const acx = fx+24*s, acy = fy-150*s;
+  if(look.aura){
+    const pulse = reduceMotion ? 1 : 0.88 + 0.12*Math.sin(time*3);
+    const ag = ctx.createRadialGradient(acx,acy,10*s,acx,acy,175*s*pulse);
+    ag.addColorStop(0,look.aura); ag.addColorStop(1,"rgba(0,0,0,0)");
+    ctx.fillStyle = ag; ctx.fillRect(0,0,W,H);
+  }
+  if(look.stars){
+    ctx.fillStyle = "#ffffff";
+    for(let k=0;k<8;k++){
+      const a = time*0.7 + k*Math.PI/4, r = 3 + (k%3);
+      const sx = acx + Math.cos(a)*125*s, sy = acy + Math.sin(a)*55*s;
+      ctx.globalAlpha = 0.5 + 0.5*Math.sin(time*4+k);
+      ctx.beginPath(); ctx.moveTo(sx,sy-r*2); ctx.lineTo(sx+r*0.6,sy); ctx.lineTo(sx,sy+r*2); ctx.lineTo(sx-r*0.6,sy); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(sx-r*2,sy); ctx.lineTo(sx,sy+r*0.6); ctx.lineTo(sx+r*2,sy); ctx.lineTo(sx,sy-r*0.6); ctx.closePath(); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
   ctx.fillStyle="rgba(5,10,35,0.35)";
   ctx.beginPath(); ctx.ellipse(fx+4*s,fy-2*s,70*s,10*s,0,0,Math.PI*2); ctx.fill();
   const L = ext(arms[0].t), R = ext(arms[1].t);
   const idleBob = reduceMotion ? 0 : Math.sin(time*(fury>50?9:5))*3;
-  const pos = fighter(fx,fy,s,L,R,{time, bob:idleBob, mouth:Math.max(L,R)});
+  const pos = fighter(fx,fy,s,L,R,{time, bob:idleBob, mouth:Math.max(L,R), look});
   geo.fist[0] = {x:pos.fiL[0], y:pos.fiL[1]}; geo.fist[1] = {x:pos.fiR[0], y:pos.fiR[1]};
   geo.head = {x:pos.head[0], y:pos.head[1]};
 
@@ -1523,6 +1629,22 @@ function frame(now){
       ctx.fillStyle="#ffffff"; ctx.fillText(f.text,0,0);
     }
     ctx.restore();
+  }
+
+  // evolution flash: a white burst and an expanding gold ring
+  if(evolveT > 0){
+    evolveT = Math.max(0, evolveT - dt*0.7);
+    const k = 1 - evolveT;
+    ctx.fillStyle = "rgba(255,255,255,"+(evolveT*evolveT*0.6).toFixed(3)+")"; ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle = "rgba(246,196,69,"+evolveT.toFixed(3)+")"; ctx.lineWidth = 10*evolveT+2;
+    ctx.beginPath(); ctx.arc(acx,acy,20+k*Math.max(W,H),0,Math.PI*2); ctx.stroke();
+    if(evolveT > 0.35){
+      ctx.save(); ctx.globalAlpha = Math.min(1,(evolveT-0.35)*3);
+      ctx.textAlign="center"; ctx.font=Math.round(H*0.08)+"px "+getComputedStyle(document.documentElement).getPropertyValue("--display");
+      ctx.lineWidth=6; ctx.strokeStyle=C.ink; ctx.fillStyle="#f6c445";
+      const label = look.name.toUpperCase()+"!";
+      ctx.strokeText(label,W*0.5,H*0.2); ctx.fillText(label,W*0.5,H*0.2); ctx.restore();
+    }
   }
 
   // streak banner
@@ -1560,16 +1682,17 @@ function tick(){
   const now = Date.now();
   const dt = Math.min(8*3600,(now-lastTick)/1000); lastTick = now;
   earn(hps()*dt);
-  fury = Math.max(0, fury - dt*(S.perks.cardio ? 8 : 16));
+  fury = Math.max(S.perks.iron ? 25 : 0, fury - dt*(S.perks.cardio ? 8 : 16));
   maybeShake();
 
   el.count.firstChild.nodeValue = fmt(S.huss);
   el.rate.textContent = fmt(hps(),{dec:true});
   el.perjab.textContent = fmt(clickBase()*furyMult(),{dec:true});
   el.rank.textContent = rankOf(S.lifetime);
+  $("stage-pill").textContent = STAGES[stageIdx(S.belts)].name;
   const g = gainsOn();
   el.gains.hidden = !g;
-  if(g) el.gains.textContent = "Gains ×7 · "+Math.ceil((S.gainsUntil-now)/1000)+"s";
+  if(g) el.gains.textContent = "Gains ×"+GAINS+" · "+Math.ceil((S.gainsUntil-now)/1000)+"s";
   el.furyfill.style.width = fury.toFixed(1)+"%";
   el.furybar.setAttribute("aria-valuenow", Math.round(fury));
   el.furymult.textContent = "×"+furyMult().toFixed(1);
@@ -1593,10 +1716,11 @@ function start(data){
   if(loaded){
     S = loaded;
     if(!restored){
-      const away = Math.min(8*3600,(Date.now()-S.last)/1000);
+      const night = !!S.perks.night;
+      const away = Math.min((night?8:4)*3600,(Date.now()-S.last)/1000);
       const b = baseHps();
       if(away>30 && b>0){
-        const amt = b*away; earn(amt);
+        const amt = b*away*(night?1:0.5); earn(amt);
         const h=Math.floor(away/3600), m=Math.floor((away%3600)/60);
         setTimeout(()=>toast("While you were gone ("+(h?h+"h ":"")+m+"m) your crew hussed +"+fmt(amt)+"."), 400);
       }
