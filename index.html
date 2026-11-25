@@ -158,6 +158,31 @@ button{font:inherit;color:inherit}
 .row .rm.armed{background:var(--rope);border-color:var(--rope);color:var(--fg)}
 .boardmsg{color:var(--muted);font-size:14px;margin:12px 0 0}
 
+/* Leaderboard tabs */
+.btabs{display:flex;border:2px solid var(--line);border-radius:999px;overflow:hidden}
+.btabs button{background:transparent;border:0;padding:4px 12px;font-weight:800;font-size:13px;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.btabs button[aria-selected="true"]{background:var(--gold);color:var(--ink)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--good);display:inline-block;box-shadow:0 0 0 3px rgba(93,219,160,.25)}
+p.boardnote{margin:8px 0 0}
+
+/* Ring chat */
+.chat{margin-top:26px;border-top:3px solid var(--ink);padding-top:16px}
+.chat h2{font-family:var(--display);font-weight:400;font-size:22px;letter-spacing:.03em;margin:0}
+.msgs{list-style:none;margin:12px 0 0;padding:12px;height:260px;overflow-y:auto;background:var(--panel);border-radius:10px;display:flex;flex-direction:column;gap:10px}
+.msg{display:flex;flex-direction:column;gap:1px;min-width:0}
+.msg .mh{display:flex;gap:8px;align-items:baseline;font-size:12px;color:var(--muted)}
+.msg .mn{font-weight:800;color:var(--fg);font-size:13px}
+.msg.mine .mn{color:var(--gold)}
+.msg .mb{overflow-wrap:anywhere;line-height:1.35}
+.chatform{display:flex;gap:8px;margin-top:10px}
+.chatform input{flex:1;min-width:0;background:var(--panel);border:2px solid var(--line);border-radius:8px;padding:9px 10px;color:var(--fg);font:inherit;font-size:16px}
+.chatform input:focus{border-color:var(--gold);outline:none}
+.chatform button{background:var(--gold);color:var(--ink);border:2px solid var(--ink);border-radius:8px;padding:8px 16px;font-weight:800;cursor:pointer}
+.chatform button:disabled{opacity:.6;cursor:wait}
+.chatlogin{margin-top:10px;width:100%;background:transparent;border:2px dashed var(--line);border-radius:8px;padding:10px;font-weight:800;color:var(--fg);cursor:pointer}
+.chatlogin:hover{border-color:var(--gold)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
 /* Header controls */
 .topright{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
 .vol{display:flex;align-items:center;gap:8px}
@@ -259,8 +284,12 @@ button{font:inherit;color:inherit}
       <section class="board" aria-labelledby="board-h">
         <div class="boardhead">
           <h2 id="board-h">Leaderboard</h2>
-          <span class="boardnote" id="board-note">All-time huss</span>
+          <div class="btabs" role="tablist" aria-label="Leaderboard view">
+            <button type="button" role="tab" id="bt-online" aria-selected="true"><i class="dot" aria-hidden="true"></i>Online now <span id="online-count"></span></button>
+            <button type="button" role="tab" id="bt-all" aria-selected="false">All-time</button>
+          </div>
         </div>
+        <p class="boardnote" id="board-note"></p>
         <form class="nick" id="nick-form" hidden>
           <label for="nick">Your fighter name</label>
           <div class="nickrow">
@@ -270,6 +299,21 @@ button{font:inherit;color:inherit}
         </form>
         <ol class="rows" id="board-rows"></ol>
         <p class="boardmsg" id="board-msg">Loading the leaderboard…</p>
+      </section>
+
+      <section class="chat" aria-labelledby="chat-h">
+        <div class="boardhead">
+          <h2 id="chat-h">Ring chat</h2>
+          <span class="boardnote">Talk to everyone in the ring.</span>
+        </div>
+        <ol class="msgs" id="msgs" aria-live="polite" aria-label="Chat messages"></ol>
+        <p class="boardmsg" id="chat-msg">Loading chat…</p>
+        <form class="chatform" id="chat-form" hidden>
+          <label for="chat-in" class="sr">Message</label>
+          <input id="chat-in" name="message" maxlength="200" autocomplete="off" placeholder="Say something…">
+          <button type="submit" id="chat-send">Send</button>
+        </form>
+        <button type="button" class="chatlogin" id="chat-login" hidden>Log in to chat</button>
       </section>
     </section>
 
@@ -880,10 +924,11 @@ pel.btn.addEventListener("click", ()=>{
 const SUPABASE_URL = "https://yumtxvqpliuoixrowfod.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_u_x8wqnZv04w8xr8C90itw_vSEnb3Ms"; // public key: safe to publish, the database rules do the protecting
 function rankOf(total){ let r=RANKS[0][1]; for(const [v,n] of RANKS) if(total>=v) r=n; return r; }
-const B = {on:false,me:null,docs:[],loaded:false,nick:"",lastSig:"",lastPost:0,posting:false,blocked:false};
+const B = {on:false,me:null,docs:[],loaded:false,online:[],onlineLoaded:false,view:"online",
+           nick:"",lastSig:"",lastPost:0,posting:false,blocked:false};
 const AUTH = {token:null, username:null, id:null};
 const bel = {rows:$("board-rows"), msg:$("board-msg"), note:$("board-note"), form:$("nick-form"), nick:$("nick"),
-             acct:$("acct"), acctName:$("acct-name")};
+             acct:$("acct"), acctName:$("acct-name"), btOnline:$("bt-online"), btAll:$("bt-all"), onlineCount:$("online-count")};
 function boardMsg(t){ bel.msg.hidden = !t; bel.msg.textContent = t||""; }
 
 function hex(n){ return Array.from(crypto.getRandomValues(new Uint8Array(n)), b=>b.toString(16).padStart(2,"0")).join(""); }
@@ -929,6 +974,7 @@ function syncAcct(){
   bel.acct.textContent = AUTH.token ? "Log out" : "Log in";
   bel.acctName.hidden = !AUTH.token;
   bel.acctName.textContent = AUTH.username || "";
+  syncChatUi();
 }
 function adoptSave(s){
   const muted = S.muted, vol = S.volume;
@@ -1039,8 +1085,9 @@ async function initBoard(){
   bel.nick.value = B.nick; bel.form.hidden = false;
   syncAcct();
   boardMsg("Loading the leaderboard…");
-  loadBoard();
+  loadBoard(); loadChat();
   setInterval(()=>{ if(!document.hidden) loadBoard(); }, 10000);
+  setInterval(()=>{ if(!document.hidden) loadChat(); }, 3000);
   if(AUTH.token){
     try{
       const d = await rpc("huss_load", {p_token:AUTH.token});
@@ -1062,23 +1109,40 @@ async function initBoard(){
 
 async function loadBoard(){
   try{
-    const r = await api("scores?select=id,nick,total,hps,prestige&order=total.desc&limit=100");
+    // who's online is always fetched (it drives the count on the tab); the all-time list only while it's shown
+    const r = await api("online_scores?select=id,nick,total,hps,prestige&order=total.desc&limit=100");
     if(!r.ok) throw new Error(r.status);
     const rows = await r.json();
-    B.docs = Array.isArray(rows) ? rows : [];
-    B.loaded = true;
+    B.online = Array.isArray(rows) ? rows : []; B.onlineLoaded = true;
+    if(B.view==="all"){
+      const r2 = await api("scores?select=id,nick,total,hps,prestige&order=total.desc&limit=100");
+      if(r2.ok){ const rows2 = await r2.json(); B.docs = Array.isArray(rows2) ? rows2 : []; B.loaded = true; }
+    }
     renderBoard();
   }catch(e){
-    if(!B.loaded) boardMsg("Can't reach the leaderboard right now. Your game keeps going, and your score posts once it connects.");
+    if(!B.onlineLoaded) boardMsg("Can't reach the leaderboard right now. Your game keeps going, and your score posts once it connects.");
   }
 }
+function setView(v){
+  B.view = v;
+  bel.btOnline.setAttribute("aria-selected", v==="online" ? "true" : "false");
+  bel.btAll.setAttribute("aria-selected", v==="all" ? "true" : "false");
+  renderBoard();
+  if(v==="all" && !B.loaded){ boardMsg("Loading the leaderboard…"); }
+  loadBoard();
+}
+bel.btOnline.addEventListener("click", ()=>setView("online"));
+bel.btAll.addEventListener("click", ()=>setView("all"));
 
 /* Saves progress (accounts) and posts the leaderboard row, at most every 15 s and only on change. */
 function stateSig(){ return [Math.floor(S.lifetime), S.owned.join(","), Object.keys(S.up).length, S.belts, Object.keys(S.perks).length, B.nick, AUTH.id||""].join("|"); }
 async function sync(force){
   if(!B.on || B.posting) return;
   const now = Date.now(), sig = stateSig();
-  if(sig===B.lastSig || (!force && now-B.lastPost < 15000)) return;
+  // check in every 20 s while the tab is visible, even with nothing new: that's what keeps you "online now"
+  const heartbeat = !document.hidden && now-B.lastPost >= 20000;
+  if(!force && now-B.lastPost < 15000) return;
+  if(sig===B.lastSig && !heartbeat) return;
   const total = Math.floor(S.lifetime);
   if(!AUTH.token && total < 1 && !B.nick) return; // don't list a guest who hasn't thrown a jab
   B.posting = true;
@@ -1102,12 +1166,18 @@ function hueOf(id){ let h=0; for(const ch of String(id)) h=(h*31+ch.charCodeAt(0
 function renderBoard(){
   if(!B.on) return;
   const myId = AUTH.token ? AUTH.id : B.me.id;
-  let list = B.docs.filter(d=>d && typeof d.total==="number" && isFinite(d.total));
-  // your own row shows live numbers instead of the last posted ones
-  if(myId && (AUTH.token || S.lifetime>=1 || B.nick)){
+  const online = B.view==="online";
+  const ready = online ? B.onlineLoaded : B.loaded;
+  const valid = d=>d && typeof d.total==="number" && isFinite(d.total);
+  let list = (online ? B.online : B.docs).filter(valid);
+  // you're here, so you count as online; your own row shows live numbers instead of the last posted ones
+  const meListed = !!myId && (!!AUTH.token || S.lifetime>=1 || !!B.nick);
+  if(meListed){
     list = list.filter(d=>d.id!==myId);
     list.push({id:myId, nick:B.nick || (AUTH.token ? AUTH.username : ""), total:Math.floor(S.lifetime), hps:baseHps(), prestige:S.belts});
   }
+  const onlineN = B.online.filter(d=>valid(d) && d.id!==myId).length + (meListed ? 1 : 0);
+  bel.onlineCount.textContent = B.onlineLoaded ? "("+onlineN+")" : "";
   list.sort((a,b)=>b.total-a.total);
   bel.rows.innerHTML = "";
   let myPos = 0;
@@ -1131,8 +1201,10 @@ function renderBoard(){
     bel.rows.appendChild(li);
   });
   if(list.length) boardMsg("");
-  else if(B.loaded) boardMsg("No scores yet. Throw a jab and you're on the board.");
-  bel.note.innerHTML = myPos ? "You're <b>#"+myPos+"</b> of "+list.length : "All-time huss";
+  else if(ready) boardMsg(online ? "Nobody's in the ring right now. Throw a jab to step in." : "No scores yet. Throw a jab and you're on the board.");
+  const scope = online ? " online right now" : " all-time";
+  bel.note.innerHTML = myPos ? "You're <b>#"+myPos+"</b> of "+list.length+scope
+    : (online ? "Players with the game open in the last minute" : "Everyone who's ever played");
 }
 
 bel.form.addEventListener("submit", e=>{
@@ -1146,7 +1218,75 @@ bel.form.addEventListener("submit", e=>{
 });
 setInterval(()=>sync(false), 5000);
 setInterval(()=>{ if(B.on) renderBoard(); }, 2000);
-document.addEventListener("visibilitychange", ()=>{ if(document.hidden) sync(true); });
+document.addEventListener("visibilitychange", ()=>{ if(document.hidden) sync(true); else { sync(false); loadBoard(); loadChat(); } });
+
+/* ---------- Ring chat ----------
+   Reads chat_messages every 3 s (only what's new since the last message seen).
+   Posting goes through huss_chat(), which needs a login and rate-limits each player. */
+const CH = {lastId:0, loaded:false, sending:false};
+const cel = {list:$("msgs"), msg:$("chat-msg"), form:$("chat-form"), input:$("chat-in"), send:$("chat-send"), login:$("chat-login")};
+function chatMsg(t){ cel.msg.hidden = !t; cel.msg.textContent = t||""; }
+function syncChatUi(){
+  const can = !!AUTH.token;
+  cel.form.hidden = !can || !B.on;
+  cel.login.hidden = can || !B.on;
+}
+function timeOf(iso){ const d = new Date(iso); return isNaN(d) ? "" : d.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}); }
+function addMessages(rows){
+  if(!rows.length) return;
+  const box = cel.list;
+  const nearBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
+  const myId = AUTH.token ? AUTH.id : null;
+  rows.forEach(m=>{
+    if(!m || typeof m.id!=="number" || m.id<=CH.lastId) return;
+    CH.lastId = m.id;
+    const mine = !!myId && m.author_id===myId;
+    const li = document.createElement("li"); li.className = "msg"+(mine?" mine":"");
+    const h = document.createElement("div"); h.className = "mh";
+    const n = document.createElement("span"); n.className = "mn"; n.textContent = String(m.nick||"Fighter").slice(0,24) + (mine ? " (you)" : "");
+    if(!mine) n.style.color = "hsl("+hueOf(m.author_id)+" 75% 72%)";
+    const t = document.createElement("span"); t.textContent = timeOf(m.created_at);
+    h.append(n,t);
+    const b = document.createElement("div"); b.className = "mb"; b.textContent = String(m.body||"").slice(0,200);
+    li.append(h,b); box.appendChild(li);
+  });
+  while(box.children.length > 150) box.removeChild(box.firstChild);
+  if(nearBottom || !CH.loaded) box.scrollTop = box.scrollHeight;
+}
+async function loadChat(){
+  if(!B.on) return;
+  try{
+    const sel = "chat_messages?select=id,created_at,author_id,nick,body";
+    const r = await api(CH.loaded ? sel+"&id=gt."+CH.lastId+"&order=id.asc&limit=100" : sel+"&order=id.desc&limit=50");
+    if(!r.ok) throw new Error(r.status);
+    let rows = await r.json(); if(!Array.isArray(rows)) rows = [];
+    if(!CH.loaded) rows.reverse();
+    addMessages(rows);
+    CH.loaded = true;
+    chatMsg(cel.list.children.length ? "" : "No messages yet. Say hi!");
+  }catch(e){
+    if(!CH.loaded) chatMsg("Can't reach the chat right now.");
+  }
+}
+cel.form.addEventListener("submit", async e=>{
+  e.preventDefault();
+  if(!AUTH.token || CH.sending) return;
+  const body = cel.input.value.replace(/\s+/g," ").trim();
+  if(!body) return;
+  CH.sending = true; cel.send.disabled = true;
+  try{
+    const r = await rpc("huss_chat", {p_token:AUTH.token, p_body:body.slice(0,200)});
+    if(r && r.error==="session expired") sessionExpired();
+    else if(r && r.error) toast(r.error);
+    else { cel.input.value = ""; await loadChat(); }
+  }catch(err){
+    toast("Couldn't send that. Check your connection and try again.");
+  }finally{
+    CH.sending = false; cel.send.disabled = false;
+    try{ cel.input.focus(); }catch(_){}
+  }
+});
+cel.login.addEventListener("click", ()=>openGate());
 
 /* ---------- Canvas ---------- */
 const ctx = el.cv.getContext("2d");
