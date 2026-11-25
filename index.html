@@ -462,7 +462,8 @@ const SAVE_KEY = "huss-huss-huss-v1";
 function fresh(){
   // huss = bank, total = earned this run, lifetime = earned across every run (ranks, belts, leaderboard)
   return {huss:0,total:0,lifetime:0,jabs:0,bestStreak:0,owned:GENS.map(()=>0),up:{},perks:{},belts:0,prestiges:0,
-          muted:false,volume:0.8,last:Date.now(),qty:1,gainsUntil:0,nextShake:Date.now()+40000};
+          muted:false,volume:0.8,last:Date.now(),qty:1,gainsUntil:0,nextShake:Date.now()+40000,
+          wipe:0}; // which owner reset this save belongs to (see huss_admin_reset)
 }
 let S = fresh();
 function normalize(s){
@@ -473,6 +474,7 @@ function normalize(s){
   out.huss = +out.huss||0; out.total = +out.total||0;
   out.lifetime = (s && s.lifetime!=null) ? (+s.lifetime||0) : out.total; // older saves had no lifetime
   out.belts = Math.max(0, Math.floor(+out.belts||0));
+  out.wipe = Math.max(0, Math.floor(+out.wipe||0));
   out.volume = (typeof out.volume==="number" && out.volume>=0 && out.volume<=1) ? out.volume : 0.8;
   if([1,10,100,-1].indexOf(out.qty)<0) out.qty = 1;
   return out;
@@ -1004,6 +1006,26 @@ async function startSession(res, isNew){
        : loaded ? "Welcome back, "+AUTH.username+". Your progress is loaded."
        : "Logged in as "+AUTH.username+". This browser's progress is now saved to your account.");
 }
+/* The owner reset this account (huss_admin_reset / huss_admin_ban): start over from zero. */
+function applyWipe(v){
+  const muted = S.muted, vol = S.volume;
+  S = fresh(); S.muted = muted; S.volume = vol; S.wipe = Math.max(0, Math.floor(+v||0));
+  lastTick = Date.now(); fury = 0; B.lastSig = "";
+  syncMinis(); syncMute(); updateShop(true); save(); renderBoard();
+  toast("Your progress was reset by the game's owner.");
+}
+/* The owner banned this account: log out here and fall back to this browser's guest game. */
+function handleBanned(){
+  AUTH.token = AUTH.username = AUTH.id = null; saveAuth();
+  let g = null;
+  try{ g = JSON.parse(localStorage.getItem("huss-guest-save")||"null"); localStorage.removeItem("huss-guest-save"); }catch(e){}
+  const muted = S.muted, vol = S.volume;
+  S = g ? normalize(g) : fresh(); S.muted = muted; S.volume = vol;
+  lastTick = Date.now(); fury = 0;
+  B.nick = (B.me && B.me.nick) || ""; bel.nick.value = B.nick; B.lastSig = "";
+  syncMinis(); syncMute(); updateShop(true); save(); syncAcct(); renderBoard();
+  openGate("This account has been banned.");
+}
 function sessionExpired(){
   AUTH.token = AUTH.username = AUTH.id = null; saveAuth(); syncAcct();
   openGate("Your login expired. Log in again to keep saving to your account.");
@@ -1091,11 +1113,18 @@ async function initBoard(){
   if(AUTH.token){
     try{
       const d = await rpc("huss_load", {p_token:AUTH.token});
-      if(d && d.error){ sessionExpired(); }
+      if(d && d.error==="banned"){ handleBanned(); }
+      else if(d && d.error){ sessionExpired(); }
       else if(d){
         AUTH.username = d.username; AUTH.id = d.account_id; saveAuth();
-        // another device got further: continue from the account's save
-        if(d.save && typeof d.save==="object" && (+d.save.lifetime||0) > S.lifetime + 1) adoptSave(d.save);
+        const wv = Math.max(0, Math.floor(+d.wipe||0));
+        const cloudOk = d.save && typeof d.save==="object";
+        if(wv > (S.wipe||0)){
+          // the owner reset this account since this browser last saved
+          if(cloudOk && (+d.save.wipe||0)===wv) adoptSave(d.save); else applyWipe(wv);
+        } else if(cloudOk && (+d.save.lifetime||0) > S.lifetime + 1){
+          adoptSave(d.save); // another device got further: continue from the account's save
+        }
         B.nick = (typeof d.nick==="string" && d.nick!==d.username) ? d.nick : "";
         bel.nick.value = B.nick; syncAcct();
       }
@@ -1149,14 +1178,16 @@ async function sync(force){
   try{
     if(AUTH.token){
       const r = await rpc("huss_store", {p_token:AUTH.token, p_save:JSON.parse(JSON.stringify(S)), p_nick:B.nick.slice(0,24),
-        p_total:total, p_hps:baseHps(), p_jabs:S.jabs, p_streak:S.bestStreak, p_prestige:S.belts});
+        p_total:total, p_hps:baseHps(), p_jabs:S.jabs, p_streak:S.bestStreak, p_prestige:S.belts, p_wipe:S.wipe||0});
       if(r && r.error==="session expired") sessionExpired();
+      else if(r && r.error==="banned") handleBanned();
+      else if(r && r.error==="reset") applyWipe(r.wipe);
       else if(r && r.ok) B.lastSig = sig;
     } else if(!B.blocked){
       const r = await api("rpc/submit_score", {method:"POST", body:{p_id:B.me.id, p_secret:B.me.secret, p_nick:B.nick.slice(0,24),
         p_total:total, p_hps:baseHps(), p_jabs:S.jabs, p_streak:S.bestStreak, p_prestige:S.belts}});
       if(r.ok) B.lastSig = sig;
-      else if(r.status===400){ const t = await r.text(); if(/not your score/i.test(t)) B.blocked = true; }
+      else if(r.status===400){ const t = await r.text(); if(/not your score|banned/i.test(t)) B.blocked = true; }
     }
   }catch(e){ /* offline: try again next round */ }
   finally{ B.lastPost = now; B.posting = false; }
@@ -1277,6 +1308,7 @@ cel.form.addEventListener("submit", async e=>{
   try{
     const r = await rpc("huss_chat", {p_token:AUTH.token, p_body:body.slice(0,200)});
     if(r && r.error==="session expired") sessionExpired();
+    else if(r && r.error==="banned") handleBanned();
     else if(r && r.error) toast(r.error);
     else { cel.input.value = ""; await loadChat(); }
   }catch(err){
