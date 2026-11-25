@@ -158,6 +158,50 @@ button{font:inherit;color:inherit}
 .row .rm.armed{background:var(--rope);border-color:var(--rope);color:var(--fg)}
 .boardmsg{color:var(--muted);font-size:14px;margin:12px 0 0}
 
+/* Header controls */
+.topright{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.vol{display:flex;align-items:center;gap:8px}
+.vol input{width:110px;accent-color:var(--gold);cursor:pointer}
+.acctname{font-weight:800;color:var(--gold);max-width:12em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:520px){.vol input{width:76px}.top{align-items:flex-start}}
+
+/* Turn Pro */
+.pro .hint b{color:var(--gold)}
+.prostats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:12px 0}
+.prostats div{display:flex;flex-direction:column;border-top:2px solid var(--line);padding-top:6px;min-width:0}
+.prostats span{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+.prostats b{font-family:var(--display);font-weight:400;font-size:20px;color:var(--gold);font-variant-numeric:tabular-nums}
+.probtn{width:100%;background:var(--gold);color:var(--ink);border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);border-radius:10px;padding:12px;font-family:var(--display);font-size:16px;letter-spacing:.02em;cursor:pointer}
+.probtn.armed{background:var(--rope);color:var(--fg)}
+.probtn:disabled{background:var(--panel-2);color:var(--muted);box-shadow:none;border-color:var(--line);cursor:not-allowed}
+.perkh{font-family:var(--display);font-weight:400;font-size:16px;letter-spacing:.03em;margin:18px 0 0}
+.up.owned{border-color:var(--good);cursor:default}
+.up.owned .c{color:var(--good)}
+
+/* Login screen */
+.gate{position:fixed;inset:0;z-index:30;display:grid;place-items:center;overflow-y:auto;background:rgba(5,10,35,.88);
+  padding-block:calc(16px + env(safe-area-inset-top,0px)) calc(16px + env(safe-area-inset-bottom,0px));
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.gatecard{width:min(420px,100%);background:var(--panel);border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);border-radius:16px;padding:26px 22px;display:flex;flex-direction:column;gap:14px}
+.gatemark{font-family:var(--display);font-weight:400;font-size:clamp(30px,9vw,42px);line-height:.95;margin:0;display:flex;flex-direction:column}
+.gatemark span:nth-child(2){color:var(--gold)}
+.gatemark span:nth-child(3){color:var(--rope)}
+.gatesub{margin:0;color:var(--muted)}
+.tabs{display:grid;grid-template-columns:1fr 1fr;border:2px solid var(--line);border-radius:999px;overflow:hidden}
+.tabs button{background:transparent;border:0;padding:8px;font-weight:800;color:var(--muted);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--gold);color:var(--ink)}
+.gate form{display:flex;flex-direction:column;gap:6px}
+.gate label{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-top:6px}
+.gate input{background:var(--wall);border:2px solid var(--line);border-radius:8px;padding:10px 12px;color:var(--fg);font:inherit;font-size:16px}
+.gate input:focus{border-color:var(--gold);outline:none}
+.gatehint{font-size:13px;color:var(--muted);margin:6px 0 0}
+.gateerr{font-size:14px;font-weight:800;color:var(--fg);background:var(--rope);border-radius:8px;padding:8px 10px;margin:6px 0 0}
+.gatego{margin-top:10px;background:var(--gold);color:var(--ink);border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);border-radius:10px;padding:12px;font-family:var(--display);font-size:17px;cursor:pointer}
+.gatego:disabled{opacity:.6;cursor:wait}
+.gateguest{background:transparent;border:2px solid var(--line);border-radius:10px;padding:10px;font-weight:800;color:var(--fg);cursor:pointer}
+.gateguest:hover{border-color:var(--gold)}
+.gatefine{font-size:12px;color:var(--muted);margin:0}
+
 .toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;background:var(--gold);color:var(--ink);border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);border-radius:10px;padding:10px 16px;font-weight:800;max-width:min(92vw,460px);text-align:center;transition:opacity .25s,transform .25s;pointer-events:none;z-index:20}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 
@@ -168,7 +212,14 @@ button{font:inherit;color:inherit}
 <div class="wrap">
   <header class="top">
     <h1 class="mark"><span>HUSS</span><span>HUSS</span><span>HUSS</span></h1>
-    <button class="iconbtn" id="mute" type="button" aria-pressed="false">Sound on</button>
+    <div class="topright">
+      <div class="vol">
+        <button class="iconbtn" id="mute" type="button" aria-pressed="false">Sound</button>
+        <input type="range" id="vol" min="0" max="100" step="1" value="80" aria-label="HUSS volume">
+      </div>
+      <span class="acctname" id="acct-name" hidden></span>
+      <button class="iconbtn" id="acct" type="button" hidden>Log in</button>
+    </div>
   </header>
 
   <main class="layout">
@@ -239,9 +290,24 @@ button{font:inherit;color:inherit}
             <button type="button" data-q="1" aria-pressed="true">×1</button>
             <button type="button" data-q="10" aria-pressed="false">×10</button>
             <button type="button" data-q="100" aria-pressed="false">×100</button>
+            <button type="button" data-q="-1" aria-pressed="false">Max</button>
           </div>
         </div>
         <div class="gens" id="gens"></div>
+      </div>
+
+      <div class="pro" id="pro" hidden>
+        <h2>Turn Pro</h2>
+        <p class="hint">Start a new run and earn championship belts. Each belt adds <b id="belt-each">5%</b> to everything you earn, forever. You keep your belts, perks and stats.</p>
+        <div class="prostats">
+          <div><span>Belts</span><b id="belts">0</b></div>
+          <div><span>Bonus</span><b id="belt-bonus">+0%</b></div>
+          <div><span>To spend</span><b id="belts-free">0</b></div>
+        </div>
+        <button type="button" class="probtn" id="probtn" disabled>Turn pro</button>
+        <p class="hint" id="pro-next"></p>
+        <h3 class="perkh">Belt perks</h3>
+        <div class="ups" id="perks"></div>
       </div>
 
       <div class="foot">
@@ -250,6 +316,27 @@ button{font:inherit;color:inherit}
       </div>
     </aside>
   </main>
+</div>
+<div class="gate" id="gate" role="dialog" aria-modal="true" aria-labelledby="gate-title" hidden>
+  <div class="gatecard">
+    <h2 class="gatemark" id="gate-title"><span>HUSS</span><span>HUSS</span><span>HUSS</span></h2>
+    <p class="gatesub">Jab the air. Top the leaderboard.</p>
+    <div class="tabs" role="tablist" aria-label="Log in or create an account">
+      <button type="button" role="tab" id="tab-login" aria-selected="true">Log in</button>
+      <button type="button" role="tab" id="tab-signup" aria-selected="false">Create account</button>
+    </div>
+    <form id="gate-form" novalidate>
+      <label for="g-user">Username</label>
+      <input id="g-user" name="username" autocomplete="username" autocapitalize="off" spellcheck="false" maxlength="20" required>
+      <label for="g-pass">Password</label>
+      <input id="g-pass" name="password" type="password" autocomplete="current-password" maxlength="72" required>
+      <p class="gatehint" id="g-hint">Welcome back. Your progress loads from your account.</p>
+      <p class="gateerr" id="g-err" role="alert" hidden></p>
+      <button type="submit" class="gatego" id="g-go">Log in</button>
+    </form>
+    <button type="button" class="gateguest" id="g-guest">Play as guest</button>
+    <p class="gatefine">There's no password reset, so pick something you'll remember, and don't reuse a password from another site.</p>
+  </div>
 </div>
 <div class="toast" id="toast" role="status"></div>
 
@@ -267,7 +354,10 @@ const GENS = [
   {id:"monk",     name:"Huss Monastery",        plural:"Monasteries",            desc:"Monks chant HUSS in shifts, around the clock.",    base:1.4e6,  hps:1400},
   {id:"turbine",  name:"Jab Turbine",           plural:"Jab turbines",           desc:"A wind farm, but in reverse.",                     base:2e7,    hps:7800},
   {id:"portal",   name:"Hussdimensional Portal",plural:"Portals",                desc:"Imports jabs from a universe made only of air.",   base:3.3e8,  hps:44000},
-  {id:"bang",     name:"The Big Huss",          plural:"Big Husses",             desc:"Theory: the universe began with a single jab.",    base:5.1e9,  hps:260000}
+  {id:"bang",     name:"The Big Huss",          plural:"Big Husses",             desc:"Theory: the universe began with a single jab.",    base:5.1e9,  hps:260000},
+  {id:"galaxy",   name:"Huss Galaxy",           plural:"Huss galaxies",          desc:"A spiral of a billion stars, every one of them jabbing.",base:7.5e10, hps:1.6e6},
+  {id:"multi",    name:"Multiverse Gym",        plural:"Multiverse gyms",        desc:"Every possible version of you, training at once.",  base:1e12,   hps:1e7},
+  {id:"loop",     name:"Time Loop Dojo",        plural:"Time loop dojos",        desc:"The same perfect jab, thrown forever.",            base:1.4e13, hps:6.5e7}
 ];
 const GEN_UP_NAMES = [
   ["Matching Tank Tops","Protein Bar Sponsor"],
@@ -278,7 +368,10 @@ const GEN_UP_NAMES = [
   ["Throat Lozenges","Vow of Eternal Huss"],
   ["Carbon Fiber Fists","Offshore Jab Farm"],
   ["Stable Wormhole","Parallel You"],
-  ["Dark Matter Wraps","Heat Death, Postponed"]
+  ["Dark Matter Wraps","Heat Death, Postponed"],
+  ["Nebula Wraps","Supermassive Shout"],
+  ["Cross-Universe Spotter","Infinite Reps"],
+  ["Groundhog Day","Paradox Punch"]
 ];
 const UPGRADES = [
   {id:"wraps", name:"Hand Wraps",       desc:"Jabs earn twice as much.",                         cost:100,   click:2,   unlock:()=>S.jabs>=15},
@@ -287,29 +380,57 @@ const UPGRADES = [
   {id:"pre",   name:"Pre-Workout Scoop",desc:"Each jab also earns 2% of your huss per second.",  cost:20000, pct:0.02,  unlock:()=>S.total>=8000},
   {id:"guard", name:"Mouthguard",       desc:"Somehow makes the HUSS louder. Jabs ×2.",          cost:150000,click:2,   unlock:()=>S.total>=60000},
   {id:"tiger", name:"Eye of the Tiger", desc:"Each jab earns another 4% of your huss per second.",cost:3e6,  pct:0.04,  unlock:()=>S.total>=1e6},
-  {id:"lungs", name:"Iron Lungs",       desc:"Each jab earns another 6% of your huss per second.",cost:2e8,  pct:0.06,  unlock:()=>S.total>=8e7}
+  {id:"lungs", name:"Iron Lungs",       desc:"Each jab earns another 6% of your huss per second.",cost:2e8,  pct:0.06,  unlock:()=>S.total>=8e7},
+  {id:"montage",  name:"Training Montage",       desc:"All crew produce 50% more.",                         cost:5e7,  prod:1.5, unlock:()=>S.total>=1e7},
+  {id:"thousand", name:"Thousand-Fist Technique",desc:"Each jab earns another 8% of your huss per second.", cost:1e11, pct:0.08,  unlock:()=>S.total>=3e10},
+  {id:"anthem",   name:"Walkout Anthem",         desc:"All crew produce 50% more.",                         cost:5e11, prod:1.5, unlock:()=>S.total>=1e11},
+  {id:"spot",     name:"Main Event Spotlight",   desc:"All crew produce twice as much.",                    cost:1e14, prod:2,   unlock:()=>S.total>=3e13}
 ];
+/* Seven upgrade tiers per crew type, each doubling it: unlocked at 1, 5, 25, 50, 100, 150 and 200 owned. */
+const TIERS = [[1,10],[5,50],[25,500],[50,5e4],[100,5e6],[150,5e8],[200,5e10]];
+const METALS = ["Bronze","Silver","Gold","Platinum","Diamond"];
 GENS.forEach((g,i)=>{
-  const [a,b] = GEN_UP_NAMES[i];
-  UPGRADES.push({id:g.id+"1", name:a, desc:g.plural+" are twice as effective.", cost:g.base*10,  gen:i, unlock:()=>S.owned[i]>=1});
-  UPGRADES.push({id:g.id+"2", name:b, desc:g.plural+" are twice as effective.", cost:g.base*150, gen:i, unlock:()=>S.owned[i]>=20});
+  TIERS.forEach(([at,mult],k)=>{
+    const name = k<2 ? GEN_UP_NAMES[i][k] : METALS[k-2]+" "+g.plural.charAt(0).toUpperCase()+g.plural.slice(1);
+    UPGRADES.push({id:g.id+(k+1), name, desc:g.plural+" are twice as effective.", cost:g.base*mult, gen:i, unlock:()=>S.owned[i]>=at});
+  });
 });
+/* Belt perks: bought once with championship belts, kept forever. */
+const PERKS = [
+  {id:"memory",   name:"Muscle Memory",   desc:"Start every run with 10 Gym Bros.",                         cost:1},
+  {id:"cardio",   name:"Cardio Base",     desc:"Fury drains half as fast.",                                 cost:2},
+  {id:"wind",     name:"Second Wind",     desc:"Protein shakes show up twice as often.",                    cost:4},
+  {id:"sparring", name:"Sparring Partner",desc:"Each jab also earns 5% of your huss per second.",           cost:8},
+  {id:"discount", name:"Gym Membership",  desc:"Crew costs 10% less.",                                      cost:15},
+  {id:"legacy",   name:"Legacy Gear",     desc:"Start every run with Hand Wraps, Sweatband and Mouthguard.",cost:30},
+  {id:"fame",     name:"Hall of Fame",    desc:"All production +50%.",                                      cost:60},
+  {id:"goat",     name:"G.O.A.T.",        desc:"Each belt gives +7% instead of +5%.",                       cost:150}
+];
 const RANKS = [
   [0,"Couch Potato"],[100,"Air Puncher"],[1e3,"Shadow Novice"],[1e4,"Huss Apprentice"],[1e5,"Jab Enthusiast"],
-  [1e6,"Huss Journeyman"],[1e7,"Air Assassin"],[1e8,"Huss Master"],[1e9,"Grand Hussmaster"],[1e11,"Huss Incarnate"],[1e13,"The Air Fears You"]
+  [1e6,"Huss Journeyman"],[1e7,"Air Assassin"],[1e8,"Huss Master"],[1e9,"Grand Hussmaster"],[1e11,"Huss Incarnate"],
+  [1e13,"The Air Fears You"],[1e15,"Hussiah"],[1e18,"Big Bang Boxer"]
 ];
 const LITRES_PER_JAB = 2.8; // forearm sweep: ~80 cm² cross-section × 35 cm reach
 
 /* ---------- State ---------- */
 const SAVE_KEY = "huss-huss-huss-v1";
 function fresh(){
-  return {huss:0,total:0,jabs:0,bestStreak:0,owned:GENS.map(()=>0),up:{},muted:false,last:Date.now(),qty:1,gainsUntil:0,nextShake:Date.now()+40000};
+  // huss = bank, total = earned this run, lifetime = earned across every run (ranks, belts, leaderboard)
+  return {huss:0,total:0,lifetime:0,jabs:0,bestStreak:0,owned:GENS.map(()=>0),up:{},perks:{},belts:0,prestiges:0,
+          muted:false,volume:0.8,last:Date.now(),qty:1,gainsUntil:0,nextShake:Date.now()+40000};
 }
 let S = fresh();
 function normalize(s){
   const d = fresh(); const out = Object.assign(d, s||{});
   out.owned = GENS.map((_,i)=> (s && s.owned && +s.owned[i]) || 0);
-  out.up = (s && s.up) || {};
+  out.up = (s && s.up && typeof s.up==="object") ? s.up : {};
+  out.perks = (s && s.perks && typeof s.perks==="object") ? s.perks : {};
+  out.huss = +out.huss||0; out.total = +out.total||0;
+  out.lifetime = (s && s.lifetime!=null) ? (+s.lifetime||0) : out.total; // older saves had no lifetime
+  out.belts = Math.max(0, Math.floor(+out.belts||0));
+  out.volume = (typeof out.volume==="number" && out.volume>=0 && out.volume<=1) ? out.volume : 0.8;
+  if([1,10,100,-1].indexOf(out.qty)<0) out.qty = 1;
   return out;
 }
 function save(){
@@ -323,20 +444,36 @@ function load(){
 
 /* ---------- Economy ---------- */
 function genMult(i){ let m=1; for(const u of UPGRADES) if(u.gen===i && S.up[u.id]) m*=2; return m; }
-function baseHps(){ let t=0; GENS.forEach((g,i)=>{ t += S.owned[i]*g.hps*genMult(i); }); return t; }
+function beltBonus(){ return 1 + S.belts*(S.perks.goat ? 0.07 : 0.05); }
+function prodMult(){
+  let m = beltBonus();
+  if(S.perks.fame) m *= 1.5;
+  for(const u of UPGRADES) if(u.prod && S.up[u.id]) m *= u.prod;
+  return m;
+}
+function baseHps(){ let t=0; GENS.forEach((g,i)=>{ t += S.owned[i]*g.hps*genMult(i); }); return t*prodMult(); }
 function gainsOn(){ return Date.now() < S.gainsUntil; }
 function hps(){ return baseHps() * (gainsOn()?7:1); }
 function clickBase(){
-  let c=1, pct=0;
+  let c=1, pct = S.perks.sparring ? 0.05 : 0;
   for(const u of UPGRADES){ if(!S.up[u.id]) continue; if(u.click) c*=u.click; if(u.pct) pct+=u.pct; }
-  return c + hps()*pct;
+  return c*beltBonus() + hps()*pct;
 }
 let fury = 0;
 function furyMult(){ return 1 + fury/50; }
-function earn(n){ S.huss += n; S.total += n; }
+function earn(n){ S.huss += n; S.total += n; S.lifetime += n; }
+const GROWTH = 1.15;
+function priceMult(){ return S.perks.discount ? 0.9 : 1; }
 function costOf(i,n){
-  const r=1.15, g=GENS[i];
-  return Math.ceil(g.base*Math.pow(r,S.owned[i])*(Math.pow(r,n)-1)/(r-1));
+  const g=GENS[i];
+  return Math.ceil(g.base*priceMult()*Math.pow(GROWTH,S.owned[i])*(Math.pow(GROWTH,n)-1)/(GROWTH-1));
+}
+function maxAffordable(i){
+  const first = GENS[i].base*priceMult()*Math.pow(GROWTH,S.owned[i]);
+  if(S.huss < first) return 0;
+  let n = Math.floor(Math.log(1 + S.huss*(GROWTH-1)/first)/Math.log(GROWTH));
+  while(n>0 && costOf(i,n) > S.huss) n--;
+  return n;
 }
 
 /* ---------- Formatting ---------- */
@@ -388,9 +525,9 @@ function playClip(a,t){
   clipIdx = (clipIdx+1) % HUSS_CLIPS.length;
   const src = a.createBufferSource(); src.buffer = hussBuf;
   const rate = 0.96 + Math.random()*0.1; src.playbackRate.value = rate;
-  const len = (e-s)/rate, g = a.createGain();
-  g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.95,t+0.005);
-  g.gain.setValueAtTime(0.95,t+len-0.03); g.gain.linearRampToValueAtTime(0,t+len);
+  const len = (e-s)/rate, g = a.createGain(), v = 0.95*S.volume;
+  g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(v,t+0.005);
+  g.gain.setValueAtTime(v,t+len-0.03); g.gain.linearRampToValueAtTime(0,t+len);
   src.connect(g); g.connect(a.destination);
   src.start(t,s,e-s);
   voices.push(src);
@@ -403,12 +540,12 @@ function env(g,t,peak,a,d){
   g.gain.exponentialRampToValueAtTime(0.0001,t+a+d);
 }
 function playHuss(){
-  if(S.muted) return;
+  if(S.muted || S.volume<=0) return;
   const now = performance.now();
   if(now-lastSnd < 45) return;
   lastSnd = now;
   const a = audio(); if(!a) return;
-  const t = a.currentTime, vol = 0.9;
+  const t = a.currentTime, vol = 0.9*S.volume;
   if(hussBuf){ playClip(a,t); return; }
   // Fallback synth voice (used until/unless huss.mp4 loads)
   // "H" – breathy burst
@@ -429,11 +566,11 @@ function playHuss(){
   s3.connect(f3); f3.connect(g3); g3.connect(a.destination); s3.start(t+0.07,Math.random()*0.2,0.24);
 }
 function playBlip(hi){
-  if(S.muted) return;
+  if(S.muted || S.volume<=0) return;
   const a = audio(); if(!a) return;
   const t=a.currentTime, o=a.createOscillator(), g=a.createGain();
   o.type="square"; o.frequency.setValueAtTime(hi?880:520,t); o.frequency.exponentialRampToValueAtTime(hi?1760:1040,t+0.08);
-  env(g,t,0.06,0.005,0.1); o.connect(g); g.connect(a.destination); o.start(t); o.stop(t+0.12);
+  env(g,t,0.06*S.volume,0.005,0.1); o.connect(g); g.connect(a.destination); o.start(t); o.stop(t+0.12);
 }
 
 /* ---------- DOM ---------- */
@@ -466,7 +603,9 @@ function buildGens(){
   });
 }
 function buy(i){
-  const n = S.qty, cost = costOf(i,n);
+  const n = S.qty>0 ? S.qty : maxAffordable(i);
+  if(n<1) return;
+  const cost = costOf(i,n);
   if(!genVisible(i) || S.huss < cost) return;
   S.huss -= cost; S.owned[i] += n;
   playBlip(false); syncMinis(); updateShop(true);
@@ -523,15 +662,17 @@ function updateShop(force){
       return;
     }
     r.b.hidden=false; r.b.classList.remove("locked");
-    const cost = costOf(i,S.qty), each = g.hps*genMult(i)*(gainsOn()?7:1);
+    const n = S.qty>0 ? S.qty : Math.max(1, maxAffordable(i));
+    const cost = costOf(i,n), each = g.hps*genMult(i)*prodMult()*(gainsOn()?7:1);
     r.k.textContent = S.owned[i];
     r.n.textContent = g.name;
     r.d.textContent = g.desc;
     r.y.textContent = "+"+fmt(each,{dec:true,short:true})+"/s each" + (S.owned[i] ? " · "+fmt(each*S.owned[i],{dec:true,short:true})+"/s total" : "");
-    r.c.textContent = (S.qty>1?"×"+S.qty+" ":"")+fmt(cost,{short:true});
+    r.c.textContent = (n>1?"×"+n+" ":"")+fmt(cost,{short:true});
     const no = S.huss < cost;
     r.b.classList.toggle("no", no); r.b.setAttribute("aria-disabled", no?"true":"false");
   });
+  updatePro();
 }
 
 /* ---------- Jab handling ---------- */
@@ -591,11 +732,11 @@ function maybeShake(){
     el.shake.hidden = false; shakeHideAt = now + 13000;
   }
   if(!el.shake.hidden && now > shakeHideAt){
-    el.shake.hidden = true; S.nextShake = now + 60000 + Math.random()*100000;
+    el.shake.hidden = true; S.nextShake = now + shakeGap();
   }
 }
 el.shake.addEventListener("click", ()=>{
-  el.shake.hidden = true; S.nextShake = Date.now() + 60000 + Math.random()*100000;
+  el.shake.hidden = true; S.nextShake = Date.now() + shakeGap();
   playBlip(true);
   if(baseHps()>0 && Math.random()<0.55){
     S.gainsUntil = Date.now()+30000;
@@ -617,8 +758,20 @@ document.querySelectorAll(".qty button").forEach(b=>{
 });
 
 /* Mute */
-function syncMute(){ el.mute.textContent = S.muted ? "Sound off" : "Sound on"; el.mute.setAttribute("aria-pressed", S.muted?"true":"false"); }
-el.mute.addEventListener("click", ()=>{ S.muted=!S.muted; syncMute(); if(!S.muted) playBlip(true); save(); });
+const volEl = $("vol");
+function syncMute(){
+  const off = S.muted || S.volume<=0;
+  el.mute.textContent = off ? "Muted" : "Sound";
+  el.mute.setAttribute("aria-pressed", off?"true":"false");
+  volEl.value = Math.round(S.volume*100);
+}
+el.mute.addEventListener("click", ()=>{
+  S.muted = !S.muted;
+  if(!S.muted && S.volume<=0) S.volume = 0.5;
+  syncMute(); if(!S.muted){ lastSnd=0; playHuss(); } save();
+});
+volEl.addEventListener("input", ()=>{ S.volume = Math.max(0,Math.min(1,(+volEl.value)/100)); S.muted = S.volume<=0; syncMute(); });
+volEl.addEventListener("change", ()=>{ lastSnd=0; playHuss(); save(); }); // preview the new level
 
 /* Reset (two-step, in-page) */
 let resetArmed = 0;
@@ -629,20 +782,108 @@ el.reset.addEventListener("click", ()=>{
     return;
   }
   clearTimeout(resetArmed); resetArmed=0;
-  const muted = S.muted; S = fresh(); S.muted = muted; fury=0; streak=0;
+  const muted = S.muted, vol = S.volume; S = fresh(); S.muted = muted; S.volume = vol; fury=0; streak=0;
   el.reset.classList.remove("armed"); el.reset.textContent="Reset progress";
-  syncMinis(); updateShop(true); save(); toast("Progress wiped. Back to the couch.");
-  postScore(true);
+  syncMinis(); syncMute(); updateShop(true); save(); toast("Progress wiped. Back to the couch.");
+  sync(true);
 });
 
-/* ---------- Leaderboard (Supabase) ----------
-   Reads public rows from the `scores` table and posts this browser's score through the
-   `submit_score` database function, which only lets a player overwrite their own row. */
+/* ---------- Turn Pro (prestige) ----------
+   Belts are earned from LIFETIME huss: total belts = floor(cbrt(lifetime / 1,000,000)).
+   1M → 1 belt, 8M → 2, 1B → 10, 1T → 100. Turning pro banks the belts you've earned
+   since last time and starts a fresh run. Spending belts on perks never lowers the bonus. */
+const BELT_UNIT = 1e6;
+function beltsFor(life){ return Math.floor(Math.cbrt(Math.max(0,life)/BELT_UNIT)); }
+function pendingBelts(){ return Math.max(0, beltsFor(S.lifetime) - S.belts); }
+function nextBeltAt(){ return Math.pow(beltsFor(S.lifetime)+1,3)*BELT_UNIT; }
+function beltsSpent(){ return PERKS.reduce((a,p)=>a+(S.perks[p.id]?p.cost:0),0); }
+function beltsFree(){ return Math.max(0, S.belts - beltsSpent()); }
+function shakeGap(){ return (60000 + Math.random()*100000) * (S.perks.wind ? 0.5 : 1); }
+function applyRunPerks(){
+  if(S.perks.memory) S.owned[0] = Math.max(S.owned[0], 10);
+  if(S.perks.legacy){ S.up.wraps = true; S.up.band = true; S.up.guard = true; }
+}
+const pel = {box:$("pro"), each:$("belt-each"), belts:$("belts"), bonus:$("belt-bonus"), free:$("belts-free"),
+             btn:$("probtn"), next:$("pro-next"), perks:$("perks")};
+let proArmed = false, proTimer = 0, perksBuilt = false;
+
+function updatePro(){
+  const show = S.lifetime >= 1e5 || S.belts > 0;
+  pel.box.hidden = !show;
+  if(!show) return;
+  pel.each.textContent = (S.perks.goat ? 7 : 5)+"%";
+  pel.belts.textContent = fmt(S.belts);
+  pel.bonus.textContent = "+"+fmt(Math.round((beltBonus()-1)*100))+"%";
+  pel.free.textContent = fmt(beltsFree());
+  const gain = pendingBelts();
+  pel.btn.disabled = gain < 1;
+  pel.btn.classList.toggle("armed", proArmed && gain>=1);
+  pel.btn.textContent = gain < 1 ? "Turn pro"
+    : proArmed ? "Click again: crew and upgrades reset"
+    : "Turn pro: +"+fmt(gain)+" belt"+(gain>1?"s":"");
+  pel.next.textContent = "Next belt at "+fmt(nextBeltAt(),{short:true})+" all-time huss. You're at "+fmt(S.lifetime,{short:true})+".";
+  renderPerks();
+}
+function renderPerks(){
+  if(!perksBuilt){
+    PERKS.forEach(p=>{
+      const b = document.createElement("button");
+      b.type="button"; b.className="up"; b.dataset.id=p.id;
+      b.innerHTML = '<span class="n"></span><span class="d"></span><span class="c"></span>';
+      b.querySelector(".n").textContent = p.name;
+      b.querySelector(".d").textContent = p.desc;
+      b.addEventListener("click", ()=>buyPerk(p.id));
+      pel.perks.appendChild(b);
+    });
+    perksBuilt = true;
+  }
+  const free = beltsFree();
+  pel.perks.querySelectorAll(".up").forEach(b=>{
+    const p = PERKS.find(x=>x.id===b.dataset.id), own = !!S.perks[p.id];
+    b.classList.toggle("owned", own);
+    b.classList.toggle("no", !own && free < p.cost);
+    b.setAttribute("aria-disabled", (own || free < p.cost) ? "true" : "false");
+    b.querySelector(".c").textContent = own ? "Owned" : p.cost+" belt"+(p.cost>1?"s":"");
+  });
+}
+function buyPerk(id){
+  const p = PERKS.find(x=>x.id===id);
+  if(!p || S.perks[id] || beltsFree() < p.cost) return;
+  S.perks[id] = true;
+  if(id==="memory" || id==="legacy") applyRunPerks();
+  playBlip(true); syncMinis(); updateShop(true); save(); sync(true);
+  toast(p.name+" unlocked. "+p.desc);
+}
+function turnPro(){
+  const gain = pendingBelts();
+  if(gain < 1) return;
+  S.belts += gain; S.prestiges = (S.prestiges||0) + 1;
+  S.huss = 0; S.total = 0; S.owned = GENS.map(()=>0); S.up = {}; S.gainsUntil = 0;
+  applyRunPerks();
+  fury = 0; syncMinis(); updateShop(true); save(); sync(true);
+  playBlip(true);
+  toast("You turned pro! +"+fmt(gain)+" belt"+(gain>1?"s":"")+". Everything you earn is now ×"+beltBonus().toFixed(2)+".");
+}
+pel.btn.addEventListener("click", ()=>{
+  if(pendingBelts() < 1) return;
+  if(!proArmed){
+    proArmed = true; clearTimeout(proTimer);
+    proTimer = setTimeout(()=>{ proArmed = false; updatePro(); }, 4000);
+    updatePro(); return;
+  }
+  proArmed = false; clearTimeout(proTimer); turnPro();
+});
+
+/* ---------- Server (Supabase) ----------
+   Leaderboard rows live in `scores`. Accounts, sessions and cloud saves go through the
+   huss_* database functions; guests post through `submit_score` with a per-browser secret. */
 const SUPABASE_URL = "https://yumtxvqpliuoixrowfod.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_u_x8wqnZv04w8xr8C90itw_vSEnb3Ms"; // public key: safe to publish, the database rules do the protecting
 function rankOf(total){ let r=RANKS[0][1]; for(const [v,n] of RANKS) if(total>=v) r=n; return r; }
-const B = {on:false,me:null,docs:[],loaded:false,nick:"",lastPostTotal:-1,lastPostNick:null,lastPost:0,posting:false,blocked:false};
-const bel = {rows:$("board-rows"), msg:$("board-msg"), note:$("board-note"), form:$("nick-form"), nick:$("nick")};
+const B = {on:false,me:null,docs:[],loaded:false,nick:"",lastSig:"",lastPost:0,posting:false,blocked:false};
+const AUTH = {token:null, username:null, id:null};
+const bel = {rows:$("board-rows"), msg:$("board-msg"), note:$("board-note"), form:$("nick-form"), nick:$("nick"),
+             acct:$("acct"), acctName:$("acct-name")};
 function boardMsg(t){ bel.msg.hidden = !t; bel.msg.textContent = t||""; }
 
 function hex(n){ return Array.from(crypto.getRandomValues(new Uint8Array(n)), b=>b.toString(16).padStart(2,"0")).join(""); }
@@ -658,6 +899,13 @@ function loadPlayer(){
   savePlayer(p); return p;
 }
 function savePlayer(p){ try{ localStorage.setItem("huss-player", JSON.stringify(p)); }catch(e){} }
+function loadAuth(){
+  try{ const a = JSON.parse(localStorage.getItem("huss-auth")||"null");
+       if(a && a.token && a.username){ AUTH.token=a.token; AUTH.username=a.username; AUTH.id=a.id||null; } }catch(e){}
+}
+function saveAuth(){
+  try{ if(AUTH.token) localStorage.setItem("huss-auth", JSON.stringify(AUTH)); else localStorage.removeItem("huss-auth"); }catch(e){}
+}
 
 function api(path, opts){
   opts = opts||{};
@@ -667,23 +915,154 @@ function api(path, opts){
     body: opts.body ? JSON.stringify(opts.body) : undefined
   });
 }
+async function rpc(fn, body){
+  const r = await api("rpc/"+fn, {method:"POST", body});
+  let data = null; try{ data = await r.json(); }catch(e){}
+  if(!r.ok) throw new Error((data && data.message) || ("HTTP "+r.status));
+  return data;
+}
 
-function initBoard(){
+/* ---------- Account state ---------- */
+function syncAcct(){
+  if(!B.on){ bel.acct.hidden = true; bel.acctName.hidden = true; return; }
+  bel.acct.hidden = false;
+  bel.acct.textContent = AUTH.token ? "Log out" : "Log in";
+  bel.acctName.hidden = !AUTH.token;
+  bel.acctName.textContent = AUTH.username || "";
+}
+function adoptSave(s){
+  const muted = S.muted, vol = S.volume;
+  S = normalize(s); S.muted = muted; S.volume = vol; S.last = Date.now();
+  lastTick = Date.now(); fury = 0;
+  syncMinis(); syncMute(); updateShop(true); save();
+}
+function stashGuest(){
+  // keep this browser's guest run so logging out later brings it back
+  if(S.lifetime > 0){ try{ localStorage.setItem("huss-guest-save", JSON.stringify(S)); }catch(e){} }
+}
+async function startSession(res, isNew){
+  AUTH.token = res.token; AUTH.username = res.username; AUTH.id = res.account_id; saveAuth();
+  try{ localStorage.removeItem("huss-gate-guest"); }catch(e){}
+  let loaded = false;
+  B.nick = "";
+  if(!isNew){
+    const d = await rpc("huss_load", {p_token:AUTH.token});
+    if(d && d.save && typeof d.save==="object" && d.save.lifetime!=null){ stashGuest(); adoptSave(d.save); loaded = true; }
+    if(d && typeof d.nick==="string" && d.nick!==d.username) B.nick = d.nick;
+  }
+  bel.nick.value = B.nick;
+  // this browser's guest progress moved into the account: retire its guest leaderboard row
+  if(!loaded && B.me) rpc("huss_forget_guest", {p_id:B.me.id, p_secret:B.me.secret}).catch(()=>{});
+  syncAcct(); B.lastSig = ""; await sync(true); renderBoard();
+  toast(isNew ? "Account created. You're playing as "+AUTH.username+", and your progress came with you."
+       : loaded ? "Welcome back, "+AUTH.username+". Your progress is loaded."
+       : "Logged in as "+AUTH.username+". This browser's progress is now saved to your account.");
+}
+function sessionExpired(){
+  AUTH.token = AUTH.username = AUTH.id = null; saveAuth(); syncAcct();
+  openGate("Your login expired. Log in again to keep saving to your account.");
+}
+async function logout(){
+  await sync(true);
+  const t = AUTH.token;
+  AUTH.token = AUTH.username = AUTH.id = null; saveAuth();
+  if(t) rpc("huss_logout", {p_token:t}).catch(()=>{});
+  let g = null;
+  try{ g = JSON.parse(localStorage.getItem("huss-guest-save")||"null"); localStorage.removeItem("huss-guest-save"); }catch(e){}
+  const muted = S.muted, vol = S.volume;
+  S = g ? normalize(g) : fresh(); S.muted = muted; S.volume = vol;
+  lastTick = Date.now(); fury = 0;
+  B.nick = (B.me && B.me.nick) || ""; bel.nick.value = B.nick; B.lastSig = "";
+  syncMinis(); syncMute(); updateShop(true); save(); syncAcct(); renderBoard();
+  openGate(); toast("Logged out. Your progress is safe in your account.");
+}
+bel.acct.addEventListener("click", ()=>{ if(AUTH.token) logout(); else openGate(); });
+
+/* ---------- Login screen ---------- */
+const G = {mode:"login", busy:false};
+const gel = {gate:$("gate"), tl:$("tab-login"), ts:$("tab-signup"), form:$("gate-form"), user:$("g-user"), pass:$("g-pass"),
+             hint:$("g-hint"), err:$("g-err"), go:$("g-go"), guest:$("g-guest")};
+function gateErr(t){ gel.err.hidden = !t; gel.err.textContent = t||""; }
+function setMode(m){
+  G.mode = m;
+  gel.tl.setAttribute("aria-selected", m==="login" ? "true" : "false");
+  gel.ts.setAttribute("aria-selected", m==="signup" ? "true" : "false");
+  gel.go.textContent = m==="login" ? "Log in" : "Create account";
+  gel.pass.setAttribute("autocomplete", m==="login" ? "current-password" : "new-password");
+  gel.hint.textContent = m==="login" ? "Welcome back. Your progress loads from your account."
+    : "3–20 letters, numbers or underscores, and at least 6 characters for the password. Your current progress comes with you.";
+  gateErr("");
+}
+function openGate(msg){
+  if(!B.on) return;
+  gel.gate.hidden = false; gateErr(msg||"");
+  setTimeout(()=>{ try{ gel.user.focus(); }catch(e){} }, 50);
+}
+function closeGate(){ gel.gate.hidden = true; }
+gel.tl.addEventListener("click", ()=>setMode("login"));
+gel.ts.addEventListener("click", ()=>setMode("signup"));
+gel.guest.addEventListener("click", ()=>{
+  try{ localStorage.setItem("huss-gate-guest","1"); }catch(e){}
+  closeGate();
+  if(!AUTH.token) toast("Playing as a guest. Log in any time from the top right to save your progress.");
+});
+gel.form.addEventListener("submit", async e=>{
+  e.preventDefault();
+  if(G.busy) return;
+  const u = gel.user.value.trim(), p = gel.pass.value;
+  if(!/^[A-Za-z0-9_]{3,20}$/.test(u)) return gateErr("Usernames are 3–20 letters, numbers or underscores.");
+  if(p.length < 6) return gateErr("Passwords need at least 6 characters.");
+  G.busy = true; gel.go.disabled = true; gateErr("");
+  gel.go.textContent = G.mode==="login" ? "Logging in…" : "Creating account…";
+  try{
+    const res = await rpc(G.mode==="login" ? "huss_login" : "huss_signup", {p_username:u, p_password:p});
+    if(!res || res.error){ gateErr((res && res.error) || "Something went wrong. Try again."); return; }
+    await startSession(res, G.mode==="signup");
+    gel.pass.value = ""; closeGate();
+  }catch(err){
+    gateErr("Can't reach the server right now. Check your connection and try again.");
+  }finally{
+    G.busy = false; gel.go.disabled = false;
+    gel.go.textContent = G.mode==="login" ? "Log in" : "Create account";
+  }
+});
+
+/* ---------- Boot ---------- */
+async function initBoard(){
   if(!SUPABASE_URL || !SUPABASE_ANON_KEY){
     bel.form.hidden = true;
     boardMsg("The leaderboard isn't switched on yet. Your game still saves in this browser.");
     return;
   }
-  B.on = true; B.me = loadPlayer(); B.nick = B.me.nick||"";
+  B.on = true; B.me = loadPlayer(); loadAuth();
+  B.nick = AUTH.token ? "" : (B.me.nick||"");
   bel.nick.value = B.nick; bel.form.hidden = false;
+  syncAcct();
   boardMsg("Loading the leaderboard…");
-  loadBoard(); postScore(true);
+  loadBoard();
   setInterval(()=>{ if(!document.hidden) loadBoard(); }, 10000);
+  if(AUTH.token){
+    try{
+      const d = await rpc("huss_load", {p_token:AUTH.token});
+      if(d && d.error){ sessionExpired(); }
+      else if(d){
+        AUTH.username = d.username; AUTH.id = d.account_id; saveAuth();
+        // another device got further: continue from the account's save
+        if(d.save && typeof d.save==="object" && (+d.save.lifetime||0) > S.lifetime + 1) adoptSave(d.save);
+        B.nick = (typeof d.nick==="string" && d.nick!==d.username) ? d.nick : "";
+        bel.nick.value = B.nick; syncAcct();
+      }
+    }catch(e){ /* offline: keep playing on this browser's copy */ }
+  } else {
+    let guest = false; try{ guest = localStorage.getItem("huss-gate-guest")==="1"; }catch(e){}
+    if(!guest) openGate();
+  }
+  sync(true);
 }
 
 async function loadBoard(){
   try{
-    const r = await api("scores?select=id,nick,total,hps&order=total.desc&limit=100");
+    const r = await api("scores?select=id,nick,total,hps,prestige&order=total.desc&limit=100");
     if(!r.ok) throw new Error(r.status);
     const rows = await r.json();
     B.docs = Array.isArray(rows) ? rows : [];
@@ -694,42 +1073,49 @@ async function loadBoard(){
   }
 }
 
-async function postScore(force){
-  if(!B.on || B.posting || B.blocked) return;
-  const now = Date.now(), total = Math.floor(S.total);
-  const changed = total!==B.lastPostTotal || B.nick!==B.lastPostNick;
-  if(!changed || (!force && now-B.lastPost < 15000)) return;
-  if(total < 1 && !B.nick) return; // don't list a fighter who hasn't thrown a jab
+/* Saves progress (accounts) and posts the leaderboard row, at most every 15 s and only on change. */
+function stateSig(){ return [Math.floor(S.lifetime), S.owned.join(","), Object.keys(S.up).length, S.belts, Object.keys(S.perks).length, B.nick, AUTH.id||""].join("|"); }
+async function sync(force){
+  if(!B.on || B.posting) return;
+  const now = Date.now(), sig = stateSig();
+  if(sig===B.lastSig || (!force && now-B.lastPost < 15000)) return;
+  const total = Math.floor(S.lifetime);
+  if(!AUTH.token && total < 1 && !B.nick) return; // don't list a guest who hasn't thrown a jab
   B.posting = true;
-  const body = {p_id:B.me.id, p_secret:B.me.secret, p_nick:B.nick.slice(0,24), p_total:total,
-                p_hps:baseHps(), p_jabs:S.jabs, p_streak:S.bestStreak};
   try{
-    const r = await api("rpc/submit_score", {method:"POST", body});
-    if(r.ok){ B.lastPostTotal = total; B.lastPostNick = body.p_nick; }
-    else if(r.status===400 || r.status===403){
-      const t = await r.text();
-      if(/not your score/i.test(t)) B.blocked = true;
+    if(AUTH.token){
+      const r = await rpc("huss_store", {p_token:AUTH.token, p_save:JSON.parse(JSON.stringify(S)), p_nick:B.nick.slice(0,24),
+        p_total:total, p_hps:baseHps(), p_jabs:S.jabs, p_streak:S.bestStreak, p_prestige:S.belts});
+      if(r && r.error==="session expired") sessionExpired();
+      else if(r && r.ok) B.lastSig = sig;
+    } else if(!B.blocked){
+      const r = await api("rpc/submit_score", {method:"POST", body:{p_id:B.me.id, p_secret:B.me.secret, p_nick:B.nick.slice(0,24),
+        p_total:total, p_hps:baseHps(), p_jabs:S.jabs, p_streak:S.bestStreak, p_prestige:S.belts}});
+      if(r.ok) B.lastSig = sig;
+      else if(r.status===400){ const t = await r.text(); if(/not your score/i.test(t)) B.blocked = true; }
     }
-  }catch(e){ /* offline: try again on the next round */ }
+  }catch(e){ /* offline: try again next round */ }
   finally{ B.lastPost = now; B.posting = false; }
 }
 
 function hueOf(id){ let h=0; for(const ch of String(id)) h=(h*31+ch.charCodeAt(0))>>>0; return h%360; }
-
 function renderBoard(){
   if(!B.on) return;
+  const myId = AUTH.token ? AUTH.id : B.me.id;
   let list = B.docs.filter(d=>d && typeof d.total==="number" && isFinite(d.total));
-  if(S.total>=1 || B.nick){
-    list = list.filter(d=>d.id!==B.me.id);
-    list.push({id:B.me.id, nick:B.nick, total:Math.floor(S.total), hps:baseHps()});
+  // your own row shows live numbers instead of the last posted ones
+  if(myId && (AUTH.token || S.lifetime>=1 || B.nick)){
+    list = list.filter(d=>d.id!==myId);
+    list.push({id:myId, nick:B.nick || (AUTH.token ? AUTH.username : ""), total:Math.floor(S.lifetime), hps:baseHps(), prestige:S.belts});
   }
   list.sort((a,b)=>b.total-a.total);
   bel.rows.innerHTML = "";
   let myPos = 0;
   list.forEach((d,i)=>{
-    const me = d.id===B.me.id; if(me) myPos = i+1;
+    const me = d.id===myId; if(me) myPos = i+1;
     const nick = typeof d.nick==="string" ? d.nick.slice(0,24) : "";
     const shown = nick || "Mystery Fighter";
+    const belts = Math.max(0, Math.floor(+d.prestige||0));
     const li = document.createElement("li"); li.className = "row"+(me?" me":"");
     const pos = document.createElement("span"); pos.className="pos"; pos.textContent = i+1;
     const av = document.createElement("span"); av.className="av"; av.setAttribute("aria-hidden","true");
@@ -738,7 +1124,7 @@ function renderBoard(){
     const who = document.createElement("span"); who.className="who";
     const nm = document.createElement("span"); nm.className="nm"; nm.textContent = shown + (me ? " (you)" : "");
     const tt = document.createElement("span"); tt.className="tt";
-    tt.textContent = rankOf(d.total)+" · "+fmt(+d.hps||0,{dec:true,short:true})+"/s";
+    tt.textContent = rankOf(d.total) + (belts ? " · "+fmt(belts)+" belt"+(belts>1?"s":"") : "") + " · "+fmt(+d.hps||0,{dec:true,short:true})+"/s";
     who.append(nm,tt);
     const sc = document.createElement("span"); sc.className="sc"; sc.textContent = fmt(d.total,{short:true});
     li.append(pos,av,who,sc,document.createElement("span"));
@@ -753,13 +1139,14 @@ bel.form.addEventListener("submit", e=>{
   e.preventDefault();
   if(!B.on) return;
   B.nick = bel.nick.value.replace(/\s+/g," ").trim().slice(0,24);
-  bel.nick.value = B.nick; B.me.nick = B.nick; savePlayer(B.me);
-  postScore(true); renderBoard();
-  toast(B.nick ? "You're on the board as "+B.nick+"." : "Name cleared.");
+  bel.nick.value = B.nick;
+  if(!AUTH.token){ B.me.nick = B.nick; savePlayer(B.me); }
+  sync(true); renderBoard();
+  toast(B.nick ? "You're on the board as "+B.nick+"." : (AUTH.token ? "Name cleared. You'll show as "+AUTH.username+"." : "Name cleared."));
 });
-setInterval(()=>postScore(false), 5000);
+setInterval(()=>sync(false), 5000);
 setInterval(()=>{ if(B.on) renderBoard(); }, 2000);
-document.addEventListener("visibilitychange", ()=>{ if(document.hidden) postScore(true); });
+document.addEventListener("visibilitychange", ()=>{ if(document.hidden) sync(true); });
 
 /* ---------- Canvas ---------- */
 const ctx = el.cv.getContext("2d");
@@ -1001,13 +1388,13 @@ function tick(){
   const now = Date.now();
   const dt = Math.min(8*3600,(now-lastTick)/1000); lastTick = now;
   earn(hps()*dt);
-  fury = Math.max(0, fury - dt*16);
+  fury = Math.max(0, fury - dt*(S.perks.cardio ? 8 : 16));
   maybeShake();
 
   el.count.firstChild.nodeValue = fmt(S.huss);
   el.rate.textContent = fmt(hps(),{dec:true});
   el.perjab.textContent = fmt(clickBase()*furyMult(),{dec:true});
-  el.rank.textContent = rankOf(S.total);
+  el.rank.textContent = rankOf(S.lifetime);
   const g = gainsOn();
   el.gains.hidden = !g;
   if(g) el.gains.textContent = "Gains ×7 · "+Math.ceil((S.gainsUntil-now)/1000)+"s";
